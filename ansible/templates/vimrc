@@ -1,0 +1,16 @@
+" enable the monokai theme
+syntax enable
+colorscheme monokai
+
+set number
+set autoindent
+set relativenumber
+
+" set hard lines on insert mode only
+autocmd InsertEnter * :set number
+autocmd InsertLeave * :set relativenumber
+
+" insert space characters whenever the tab key is pressed
+set expandtab
+" change the tab width to 4 spaces
+set tabstop=2

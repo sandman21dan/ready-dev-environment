@@ -1,0 +1,122 @@
+---
+- hosts: all
+  tasks:
+    - name: Add microsoft packages key
+      apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+      become: yes
+    - name:
+      get_url:
+        url: https://packages.microsoft.com/config/ubuntu/18.04/prod.list
+        dest: /etc/apt/sources.list.d/mssql-release.list
+      become: yes
+    - name: Install dependencies
+      apt:
+        pkg:
+          - curl
+          - wget
+          - git
+          - tmux
+          - vim
+          - zsh
+          - silversearcher-ag
+          # database drivers
+          - libpq-dev
+          - unixodbc-dev
+          - msodbcsql17
+          - mssql-tools
+          # for building python
+          - build-essential
+          - libbz2-dev
+          - libffi-dev
+          - liblzma-dev
+          - libreadline-dev
+          - libsqlite3-dev
+          - libssl-dev
+          - python-openssl
+          - zlib1g-dev
+          # Redis cli
+          - redis-tools
+        state: present
+      become: yes
+      environment:
+        ACCEPT_EULA: Y
+
+    - name: Install nvm
+      git:
+        repo: https://github.com/creationix/nvm.git
+        version: v0.33.11
+        dest: /home/{{ ansible_user_id }}/.nvm
+
+    # python requirements
+    - name: Download pyenv installer
+      get_url:
+        url: https://pyenv.run
+        dest: /home/{{ ansible_user_id }}/.pyenv_install.sh
+
+    - name: Install pyenv
+      command: /bin/bash /home/{{ ansible_user_id }}/.pyenv_install.sh
+      args:
+        creates: /home/{{ ansible_user_id }}/.pyenv
+
+    - name: Install python 3.7.4
+      command: /home/{{ ansible_user_id }}/.pyenv/bin/pyenv install 3.7.4
+      args:
+        creates: /home/{{ ansible_user_id }}/.pyenv/versions/3.7.4
+
+    - name: Install pipenv
+      command: /home/{{ ansible_user_id }}/.pyenv/shims/pip install --user pipenv
+      args:
+        creates: /home/{{ ansible_user_id }}/.pyenv/shims/pipenv
+      environment:
+        PYENV_VERSION: 3.7.4
+
+    - name: Install gimme-aws-creds
+      command: /home/{{ ansible_user_id }}/.pyenv/shims/pip install --user --upgrade gimme-aws-creds
+      args:
+        creates: /home/{{ ansible_user_id }}/.pyenv/shims/gimme-aws-creds
+      environment:
+        PYENV_VERSION: 3.7.4
+
+    # END python requirements
+
+    - name: Install oh-my-zsh
+      git:
+        repo: https://github.com/robbyrussell/oh-my-zsh.git
+        dest: /home/{{ ansible_user_id }}/.oh-my-zsh
+
+    - name: Install zsh syntax highlight
+      git:
+        repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
+        dest: /home/{{ ansible_user_id }}/.oh-my-zsh/zsh-syntax-highlighting
+
+    - name: Install z
+      get_url:
+        url: https://raw.githubusercontent.com/rupa/z/master/z.sh
+        dest: /home/{{ ansible_user_id }}
+
+    - name: zshrc
+      template:
+        src: ./templates/zshrc
+        dest: /home/{{ ansible_user_id }}/.zshrc
+
+    - name: Create vim themes path
+      file:
+        path: /home/{{ ansible_user_id }}/.vim/colors
+        state: directory
+
+    - name: Download vim monokai
+      get_url:
+        url: https://raw.githubusercontent.com/sickill/vim-monokai/master/colors/monokai.vim
+        dest: /home/{{ ansible_user_id }}/.vim/colors
+
+    - name: vimrc
+      copy:
+        src: ./templates/vimrc
+        dest: /home/{{ ansible_user_id }}/.vimrc
+
+    - name: tmux config
+      copy:
+        src: ./templates/tmux.conf
+        dest: /home/{{ ansible_user_id }}/.tmux.conf
