@@ -2,7 +2,8 @@ version: '3.7'
 
 services:
   dev:
-    build: ./
+    image: sandman21dan/ready-dev-environment
+    # build: ./
     container_name: dev
     ports:
       - '1234:1234'
