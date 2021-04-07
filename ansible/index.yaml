@@ -20,7 +20,7 @@
           - tmux
           - vim
           - zsh
-          - silversearcher-ag
+          - the_silver_searcher
           # database drivers
           - libpq-dev
           - unixodbc-dev
