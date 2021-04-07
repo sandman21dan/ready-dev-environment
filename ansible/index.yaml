@@ -39,7 +39,7 @@
           # Redis cli
           # - redis-tools
         state: present
-      become: yes
+      # become: yes
       environment:
         ACCEPT_EULA: Y
 
