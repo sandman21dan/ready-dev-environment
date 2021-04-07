@@ -22,8 +22,8 @@
           - zsh
           - the_silver_searcher
           # database drivers
-          - libpq-dev
-          - unixodbc-dev
+          - libpq
+          - unixodbc
           # - msodbcsql17
           # - mssql-tools
           # for building python
