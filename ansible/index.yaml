@@ -52,10 +52,10 @@
       args:
         creates: /Users/{{ ansible_user_id }}/.pyenv
 
-    - name: Install python 3.7.4
-      command: /Users/{{ ansible_user_id }}/.pyenv/bin/pyenv install 3.7.4
+    - name: Install python 3.7.9
+      command: /Users/{{ ansible_user_id }}/.pyenv/bin/pyenv install 3.7.9
       args:
-        creates: /Users/{{ ansible_user_id }}/.pyenv/versions/3.7.4
+        creates: /Users/{{ ansible_user_id }}/.pyenv/versions/3.7.9
 
     - name: Install pipenv
       command: /Users/{{ ansible_user_id }}/.pyenv/shims/pip install --user pipenv
