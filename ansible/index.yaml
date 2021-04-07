@@ -27,14 +27,7 @@
           # - msodbcsql17
           # - mssql-tools
           # for building python
-          - libbz2
-          - libffi
-          - liblzma
-          - libreadline
-          - libsqlite3
-          - libssl
-          - python-openssl
-          - zlib1g
+          - zlib
           # Redis cli
           # - redis-tools
         state: present
