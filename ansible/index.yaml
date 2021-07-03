@@ -24,8 +24,8 @@
           # database drivers
           - libpq-dev
           - unixodbc-dev
-          - msodbcsql17
-          - mssql-tools
+            #- msodbcsql17
+            #- mssql-tools
           # for building python
           - build-essential
           - libbz2-dev
@@ -49,6 +49,16 @@
         version: v0.33.11
         dest: /home/{{ ansible_user_id }}/.nvm
 
+    - name: Install goenv
+      git:
+        repo: https://github.com/syndbg/goenv.git
+        dest: /home/{{ ansible_user_id }}/.goenv
+
+    - name: Install jenv
+      git:
+        repo: https://github.com/jenv/jenv.git
+        dest: /home/{{ ansible_user_id }}/.jenv
+
     # python requirements
     - name: Download pyenv installer
       get_url:
@@ -60,24 +70,24 @@
       args:
         creates: /home/{{ ansible_user_id }}/.pyenv
 
-    - name: Install python 3.7.4
-      command: /home/{{ ansible_user_id }}/.pyenv/bin/pyenv install 3.7.4
+    - name: Install python 3.7.9
+      command: /home/{{ ansible_user_id }}/.pyenv/bin/pyenv install 3.7.9
       args:
-        creates: /home/{{ ansible_user_id }}/.pyenv/versions/3.7.4
+        creates: /home/{{ ansible_user_id }}/.pyenv/versions/3.7.9
 
     - name: Install pipenv
       command: /home/{{ ansible_user_id }}/.pyenv/shims/pip install --user pipenv
       args:
         creates: /home/{{ ansible_user_id }}/.pyenv/shims/pipenv
       environment:
-        PYENV_VERSION: 3.7.4
+        PYENV_VERSION: 3.7.9
 
     - name: Install gimme-aws-creds
       command: /home/{{ ansible_user_id }}/.pyenv/shims/pip install --user --upgrade gimme-aws-creds
       args:
         creates: /home/{{ ansible_user_id }}/.pyenv/shims/gimme-aws-creds
       environment:
-        PYENV_VERSION: 3.7.4
+        PYENV_VERSION: 3.7.9
 
     # END python requirements
 
