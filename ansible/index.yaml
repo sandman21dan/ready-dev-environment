@@ -1,132 +1,164 @@
 ---
 - hosts: all
+
+  vars:
+    sql_server_deps: false
+    skip_install_python: false
+    python_version: "3.8.10"
+    os: linux
+    wsl: false
+    common_dependencies:
+      - curl
+      - wget
+      - git
+      - tmux
+      - vim
+      - zsh
+      - silversearcher-ag
+    apt_dependencies:
+      # database drivers
+      - libpq-dev
+      - unixodbc-dev
+      # if sql_server_deps is truthy, add ms sql server deps
+      - "{{ sql_server_deps | bool | ternary('msodbcsql17', '') }}"
+      - "{{ sql_server_deps | bool | ternary('mssql-tools', '') }}"
+      # for building python
+      - build-essential
+      - libbz2-dev
+      - libffi-dev
+      - liblzma-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - libssl-dev
+      - python-openssl
+      - zlib1g-dev
+      # Redis cli
+      - redis-tools
+    brew_dependencies:
+      # database drivers
+      - libpq
+      - unixodbc
+      # for building python
+      - zlib
+
   tasks:
     - name: Add microsoft packages key
       apt_key:
         url: https://packages.microsoft.com/keys/microsoft.asc
         state: present
       become: yes
-    - name:
+      when: sql_server_deps | bool
+
+    - name: Add mssql packages
       get_url:
         url: https://packages.microsoft.com/config/ubuntu/18.04/prod.list
         dest: /etc/apt/sources.list.d/mssql-release.list
       become: yes
-    - name: Install dependencies
+      when: sql_server_deps | bool
+
+    - name: APT Install dependencies
+      when: not os == "macos"
       apt:
-        pkg:
-          - curl
-          - wget
-          - git
-          - tmux
-          - vim
-          - zsh
-          - silversearcher-ag
-          # database drivers
-          - libpq-dev
-          - unixodbc-dev
-            #- msodbcsql17
-            #- mssql-tools
-          # for building python
-          - build-essential
-          - libbz2-dev
-          - libffi-dev
-          - liblzma-dev
-          - libreadline-dev
-          - libsqlite3-dev
-          - libssl-dev
-          - python-openssl
-          - zlib1g-dev
-          # Redis cli
-          - redis-tools
+        pkg: "{{ common_dependencies + apt_dependencies|select|list }}"
         state: present
       become: yes
       environment:
         ACCEPT_EULA: Y
 
+    - name: Brew install dependencies
+      community.general.homebrew:
+        pkg: "{{ common_dependencies + brew_dependencies }}"
+        state: present
+      when: os == "macos"
+
     - name: Install nvm
       git:
         repo: https://github.com/creationix/nvm.git
         version: v0.33.11
-        dest: /home/{{ ansible_user_id }}/.nvm
+        dest: "{{ ansible_env.HOME }}/.nvm"
 
     - name: Install goenv
       git:
         repo: https://github.com/syndbg/goenv.git
-        dest: /home/{{ ansible_user_id }}/.goenv
+        dest: "{{ ansible_env.HOME }}/.goenv"
 
     - name: Install jenv
       git:
         repo: https://github.com/jenv/jenv.git
-        dest: /home/{{ ansible_user_id }}/.jenv
+        dest: "{{ ansible_env.HOME }}/.jenv"
 
     # python requirements
     - name: Download pyenv installer
       get_url:
         url: https://pyenv.run
-        dest: /home/{{ ansible_user_id }}/.pyenv_install.sh
+        dest: "{{ ansible_env.HOME }}/.pyenv_install.sh"
 
     - name: Install pyenv
-      command: /bin/bash /home/{{ ansible_user_id }}/.pyenv_install.sh
+      command: /bin/bash "{{ ansible_env.HOME }}/.pyenv_install.sh"
       args:
-        creates: /home/{{ ansible_user_id }}/.pyenv
+        creates: "{{ ansible_env.HOME }}/.pyenv"
 
-    - name: Install python 3.7.9
-      command: /home/{{ ansible_user_id }}/.pyenv/bin/pyenv install 3.7.9
+    - name: Install python {{ python_version }}
+      command: "{{ ansible_env.HOME }}/.pyenv/bin/pyenv install {{ python_version }}"
       args:
-        creates: /home/{{ ansible_user_id }}/.pyenv/versions/3.7.9
+        creates: "{{ ansible_env.HOME }}/.pyenv/versions/{{ python_version }}"
+      when: not skip_install_python | bool
 
     - name: Install pipenv
-      command: /home/{{ ansible_user_id }}/.pyenv/shims/pip install --user pipenv
+      command: "{{ ansible_env.HOME }}/.pyenv/shims/pip install --user pipenv"
       args:
-        creates: /home/{{ ansible_user_id }}/.pyenv/shims/pipenv
+        creates: "{{ ansible_env.HOME }}/.pyenv/shims/pipenv"
       environment:
-        PYENV_VERSION: 3.7.9
+        PYENV_VERSION: "{{ python_version }}"
+      when: not skip_install_python | bool
 
     - name: Install gimme-aws-creds
-      command: /home/{{ ansible_user_id }}/.pyenv/shims/pip install --user --upgrade gimme-aws-creds
+      command: "{{ ansible_env.HOME }}/.pyenv/shims/pip install --user --upgrade gimme-aws-creds"
       args:
-        creates: /home/{{ ansible_user_id }}/.pyenv/shims/gimme-aws-creds
+        creates: "{{ ansible_env.HOME }}/.pyenv/shims/gimme-aws-creds"
       environment:
-        PYENV_VERSION: 3.7.9
+        PYENV_VERSION: "{{ python_version }}"
+      when: not skip_install_python | bool
 
     # END python requirements
 
     - name: Install oh-my-zsh
       git:
         repo: https://github.com/robbyrussell/oh-my-zsh.git
-        dest: /home/{{ ansible_user_id }}/.oh-my-zsh
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
 
     - name: Install zsh syntax highlight
       git:
         repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
-        dest: /home/{{ ansible_user_id }}/.oh-my-zsh/zsh-syntax-highlighting
+        dest: "{{ ansible_env.HOME }}/.oh-my-zsh/zsh-syntax-highlighting"
 
     - name: Install z
       get_url:
         url: https://raw.githubusercontent.com/rupa/z/master/z.sh
-        dest: /home/{{ ansible_user_id }}
+        dest: "{{ ansible_env.HOME }}"
 
     - name: zshrc
       template:
         src: ./templates/zshrc
-        dest: /home/{{ ansible_user_id }}/.zshrc
+        dest: "{{ ansible_env.HOME }}/.zshrc"
 
     - name: Create vim themes path
       file:
-        path: /home/{{ ansible_user_id }}/.vim/colors
+        path: "{{ ansible_env.HOME }}/.vim/colors"
         state: directory
 
     - name: Download vim monokai
       get_url:
         url: https://raw.githubusercontent.com/sickill/vim-monokai/master/colors/monokai.vim
-        dest: /home/{{ ansible_user_id }}/.vim/colors
+        dest: "{{ ansible_env.HOME }}/.vim/colors"
 
     - name: vimrc
       copy:
         src: ./templates/vimrc
-        dest: /home/{{ ansible_user_id }}/.vimrc
+        dest: "{{ ansible_env.HOME }}/.vimrc"
 
     - name: tmux config
       copy:
         src: ./templates/tmux.conf
-        dest: /home/{{ ansible_user_id }}/.tmux.conf
+        dest: "{{ ansible_env.HOME }}/.tmux.conf"
+...

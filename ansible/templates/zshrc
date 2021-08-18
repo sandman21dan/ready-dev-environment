@@ -120,9 +120,68 @@ alias git-checkout-fuzzy="git_fuzzy_checkout"
 alias git-delete-merged-branches='git branch --merged >/tmp/merged-branches && vi /tmp/merged-branches && xargs git branch -D </tmp/merged-branches'
 alias git-delete-all-branches='git branch >/tmp/merged-branches && vi /tmp/merged-branches && xargs git branch -D </tmp/merged-branches'
 
+alias md5sum='md5 -r'
+
+git-rebase-master() {
+  git checkout -b $1 && git checkout $1 && git branch -D master && git checkout master && git pull && git checkout $1 && git rebase master && git checkout master && git rebase $1
+}
+
+git-rebase-develop() {
+  git checkout -b $1 && git checkout $1 && git branch -D develop && git checkout develop && git pull && git checkout $1 && git rebase develop && git checkout develop && git rebase $1
+}
+
+# Review a github PR using the GH cli
+# Checkout to branch and approve and merge (if branch provided)
+# If no branch provided it expect that you're already checked out to the branch
+review-merge-pr () {
+  if [ ! -z $1 ];
+    then
+      gh pr checkout $1
+    fi
+  gh pr review --comment -b "Reviewed & Approved"
+  gh pr review --approve
+  gh pr merge --merge --delete-branch
+}
+
+send-to-nas() {
+  rsync -aP $1 nas:/mnt/public/$2
+}
+
+# Change git GPG signature and email from personal to work
+alias git-signature-work='git config --global user.signingkey <YOUR_WORK_SIGNING_KEY> && git config --global user.email <YOUR_WORK_EMAIL>'
+alias git-signature-personal='git config --global user.signingkey <YOUR_PERSONAL_SIGNING_KEY> && git config --global user.email <YOUR_PERSONAL_EMAIL>'
+
+{% if os == "linux" -%}
+{% if wsl|bool %}
+pbcopy () {
+  tee <&0 | clip.exe
+  exit 0
+}
+
+pbpaste () {
+  powershell.exe Get-Clipboard | sed 's/\r$//' | sed -z '$ s/\n$//'
+  exit 0
+}
+{% else %}
+alias pbcopy='xclip -selection clipboard'
+alias pbpaste='xclip -selection clipboard -o'
+{% endif -%}
+{% endif -%}
+
+{% if os == "macos" %}
+# Mac specific aliases
+
+# Use brew's git and not apple git
+alias git='/usr/local/bin/git'
+
+alias md5sum="md5 -r"
+
+# END Mac specific aliases
+{% endif -%}
+
 # END Aliases
 
-# Fix gpg signing
+# Fix gpg signing -- Tell gpg which tty
 export GPG_TTY=$(tty)
 
 # pyenv

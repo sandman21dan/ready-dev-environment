@@ -15,7 +15,10 @@ This is based on my personal development preferences and is very opinionated
 - git
 - wget
 - nvm
-- Nicer configuration for vim
+- goenv
+- jenv
+- Nice default for vim
+- Python build dependencies
 - pyenv
 - pipenv
 - [ag](https://github.com/ggreer/the_silver_searcher)
@@ -60,13 +63,41 @@ docker exec -it dev zsh
 To get the automated setup running locally, `Ansible` must already be installed, check
 [here](https://docs.ansible.com/ansible/2.5/installation_guide/intro_installation.html) for a guide
 
-To run locally run the following command:
+To run locally run the following commands:
 
 ```sh
+ansible-galaxy collection install community.general
 ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml
 ```
 
-currently `apt` is the package manager that is supported but others can be easily swapped
+There's some variables that can be used to customise what gets installed or for which OS
+
+* `sql_server_deps`: default `false`
+
+    Whether to install MS SQL Server drivers
+    Linux only
+* `python_version`: default `3.8.10`
+* `skip_install_python`: default `false`
+
+    Skips installing python but will still install pyenv
+* `os`: default `linux`
+
+    Options are `linux` and `macos`
+* `wsl`: default `false`
+
+    WSL toggle, adds scripts for pbcopy and pbpaste
+    that work against Windows
+
+### MacOs
+
+For usage in MacOS the following commands needs to be run:
+
+```sh
+ansible-galaxy collection install community.general
+ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml --extra-vars "os=macos"
+```
+
+currently `apt` and `brew` are the supported package managers but others can be easily swapped
 
 ## How does it work?
 
