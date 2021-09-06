@@ -14,8 +14,8 @@
       - tmux
       - vim
       - zsh
-      - silversearcher-ag
     apt_dependencies:
+      - silversearcher-ag
       # database drivers
       - libpq-dev
       - unixodbc-dev
@@ -35,6 +35,7 @@
       # Redis cli
       - redis-tools
     brew_dependencies:
+      - the_silver_searcher
       # database drivers
       - libpq
       - unixodbc
