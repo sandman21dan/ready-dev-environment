@@ -76,7 +76,7 @@
     - name: Install nvm
       git:
         repo: https://github.com/creationix/nvm.git
-        version: v0.33.11
+        version: v0.39.0
         dest: "{{ ansible_env.HOME }}/.nvm"
 
     - name: Install goenv
