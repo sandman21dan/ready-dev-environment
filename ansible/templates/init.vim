@@ -30,7 +30,7 @@ set ttyfast                 " Speed up scrolling in Vim
 :  autocmd BufLeave,FocusLost,InsertEnter,WinLeave   * if &nu                  | set nornu | endif
 :augroup END
 
-call plug#begin("~/.vim/plugged")
+call plug#begin("~/.local/shared/nvim/site/plugged")
  " Plugin Section
  Plug 'dracula/vim'
  Plug 'ryanoasis/vim-devicons'
