@@ -9,11 +9,12 @@
     wsl: false
     common_dependencies:
       - curl
-      - wget
       - git
-      - tmux
-      - vim
       - neovim
+      - tmux
+      - tree
+      - vim
+      - wget
       - zsh
     apt_dependencies:
       - silversearcher-ag
