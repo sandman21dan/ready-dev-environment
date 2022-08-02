@@ -189,6 +189,10 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 # END pyenv
 
+# python poetry
+export PATH="$HOME/.poetry/bin:$PATH"
+# END python poetry
+
 # nvm
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -207,5 +211,9 @@ export PATH="$PATH:$GOPATH/bin"
 export PATH="$HOME/.jenv/bin:$PATH"
 eval "$(jenv init -)"
 # END jenv
+
+# tfenv
+export PATH="$HOME/.tfenv/bin:$PATH"
+# END tfenv
 
 source ~/.oh-my-zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

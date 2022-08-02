@@ -115,6 +115,12 @@
         PYENV_VERSION: "{{ python_version }}"
       when: not skip_install_python | bool
 
+    - name: Install python poetry
+      shell: "curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | pyenv exec python -"
+      args:
+        creates: "{{ ansible_env.HOME }}/.poetry/bin"
+      when: not skip_install_python | bool
+
     - name: Install gimme-aws-creds
       command: "{{ ansible_env.HOME }}/.pyenv/shims/pip install --user --upgrade gimme-aws-creds"
       args:
@@ -194,4 +200,9 @@
       copy:
         src: ./templates/tmux.conf
         dest: "{{ ansible_env.HOME }}/.tmux.conf"
+
+    - name: Install tfenv
+      git:
+        repo: https://github.com/tfutils/tfenv.git
+        dest: "{{ ansible_env.HOME }}/.tfenv"
 ...
