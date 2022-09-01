@@ -1,10 +1,10 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 # Install dependencies
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install software-properties-common -y
 RUN apt-add-repository ppa:ansible/ansible
-RUN apt-get install python ansible sudo -y
+RUN apt-get install python3 ansible sudo -y
 
 # Add sudoer user named 'docker'
 RUN adduser --disabled-password --gecos '' docker
@@ -17,4 +17,4 @@ RUN ansible-galaxy collection install community.general && \
   ansible-playbook --connection=local --inventory 127.0.0.1, /home/docker/ansible-playbook/index.yaml && \
   sudo rm -rf /home/docker/ansible-playbook
 
-ENTRYPOINT tail -f /dev/null
+CMD tail -f /dev/null

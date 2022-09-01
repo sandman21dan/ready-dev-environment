@@ -76,7 +76,7 @@ There's some variables that can be used to customise what gets installed or for 
 
     Whether to install MS SQL Server drivers
     Linux only
-* `python_version`: default `3.8.10`
+* `python_version`: default `3.10.6`
 * `skip_install_python`: default `false`
 
     Skips installing python but will still install pyenv

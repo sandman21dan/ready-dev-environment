@@ -4,7 +4,7 @@
   vars:
     sql_server_deps: false
     skip_install_python: false
-    python_version: "3.8.12"
+    python_version: "3.10.6"
     os: linux
     wsl: false
     common_dependencies:
@@ -32,7 +32,7 @@
       - libreadline-dev
       - libsqlite3-dev
       - libssl-dev
-      - python-openssl
+      - python3-openssl
       - zlib1g-dev
       # Redis cli
       - redis-tools
@@ -116,17 +116,9 @@
       when: not skip_install_python | bool
 
     - name: Install python poetry
-      shell: "curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | pyenv exec python -"
+      shell: "curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -"
       args:
         creates: "{{ ansible_env.HOME }}/.poetry/bin"
-      when: not skip_install_python | bool
-
-    - name: Install gimme-aws-creds
-      command: "{{ ansible_env.HOME }}/.pyenv/shims/pip install --user --upgrade gimme-aws-creds"
-      args:
-        creates: "{{ ansible_env.HOME }}/.pyenv/shims/gimme-aws-creds"
-      environment:
-        PYENV_VERSION: "{{ python_version }}"
       when: not skip_install_python | bool
 
     # END python requirements
