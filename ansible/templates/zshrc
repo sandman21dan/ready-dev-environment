@@ -146,6 +146,14 @@ send-to-nas() {
   rsync -aP $1 nas:/mnt/public/$2
 }
 
+encrypt-file() {
+  openssl aes-256-cbc -a -salt -in $1 -out $1.enc
+}
+
+decrypt-file() {
+  openssl aes-256-cbc -d -a -in $1 -out ${1%[.]enc}
+}
+
 # Change git GPG signature and email from personal to work
 alias git-signature-work='git config --global user.signingkey <YOUR_WORK_SIGNING_KEY> && git config --global user.email <YOUR_WORK_EMAIL>'
 alias git-signature-personal='git config --global user.signingkey <YOUR_PERSONAL_SIGNING_KEY> && git config --global user.email <YOUR_PERSONAL_EMAIL>'
