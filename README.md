@@ -14,13 +14,9 @@ This is based on my personal development preferences and is very opinionated
 - Pre-configured tmux
 - git
 - wget
-- nvm
-- goenv
-- jenv
+- asdf
 - Nice default for vim
 - Python build dependencies
-- pyenv
-- pipenv
 - [ag](https://github.com/ggreer/the_silver_searcher)
 - Common database drivers
 
@@ -70,23 +66,29 @@ ansible-galaxy collection install community.general
 ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml
 ```
 
+For WSL:
+```sh
+ansible-galaxy collection install community.general
+ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml --extra-vars "wsl=true"
+```
+
 There's some variables that can be used to customise what gets installed or for which OS
 
 * `sql_server_deps`: default `false`
 
     Whether to install MS SQL Server drivers
     Linux only
-* `python_version`: default `3.10.6`
+* `python_version`: default `latest`
 * `skip_install_python`: default `false`
-
-    Skips installing python but will still install pyenv
+* `node_version`: default `latest`
+* `skip_install_node`: default `false`
 * `os`: default `linux`
 
     Options are `linux` and `macos`
 * `wsl`: default `false`
 
     WSL toggle, adds scripts for pbcopy and pbpaste
-    that work against Windows
+    that work between wsl2 and the Windows clipboard
 
 ### MacOs
 

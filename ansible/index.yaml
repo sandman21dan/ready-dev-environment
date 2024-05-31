@@ -4,14 +4,18 @@
   vars:
     sql_server_deps: false
     skip_install_python: false
-    python_version: "3.10.6"
+    python_version: "latest"
+    skip_install_node: false
+    node_version: "latest"
     os: linux
     wsl: false
     common_dependencies:
       - curl
+      - fzf
       - git
       - neovim
       - tmux
+      - tree
       - tree
       - vim
       - wget
@@ -42,6 +46,7 @@
       - libpq
       - unixodbc
       # for building python
+      - coreutils
       - zlib
 
   tasks:
@@ -74,62 +79,64 @@
         state: present
       when: os == "macos"
 
-    - name: Install nvm
+    - name: Install asdf
       git:
-        repo: https://github.com/creationix/nvm.git
-        version: v0.39.0
-        dest: "{{ ansible_env.HOME }}/.nvm"
+        repo: https://github.com/asdf-vm/asdf.git
+        version: v0.14.0
+        depth: 2
+        dest: "{{ ansible_env.HOME }}/.asdf"
 
-    - name: Install goenv
-      git:
-        repo: https://github.com/syndbg/goenv.git
-        dest: "{{ ansible_env.HOME }}/.goenv"
-
-    - name: Install jenv
-      git:
-        repo: https://github.com/jenv/jenv.git
-        dest: "{{ ansible_env.HOME }}/.jenv"
-
-    # python requirements
-    - name: Download pyenv installer
-      get_url:
-        url: https://pyenv.run
-        dest: "{{ ansible_env.HOME }}/.pyenv_install.sh"
-
-    - name: Install pyenv
-      command: /bin/bash "{{ ansible_env.HOME }}/.pyenv_install.sh"
+    - name: Install asdf python plugin
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add python"
       args:
-        creates: "{{ ansible_env.HOME }}/.pyenv"
+        creates: "{{ ansible_env.HOME }}/.asdf/plugins/python"
+
+    - name: Install asdf NodeJS plugin
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add nodejs"
+      args:
+        creates: "{{ ansible_env.HOME }}/.asdf/plugins/nodejs"
+
+    - name: Install asdf golang plugin
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add golang"
+      args:
+        creates: "{{ ansible_env.HOME }}/.asdf/plugins/golang"
+
+    - name: Install asdf Java plugin
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add java"
+      args:
+        creates: "{{ ansible_env.HOME }}/.asdf/plugins/java"
+
+    - name: Install asdf Terraform plugin
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add terraform"
+      args:
+        creates: "{{ ansible_env.HOME }}/.asdf/plugins/terraform"
+
+    - name: Install asdf aws-cli plugin
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add awscli"
+      args:
+        creates: "{{ ansible_env.HOME }}/.asdf/plugins/awscli"
 
     - name: Install python {{ python_version }}
-      command: "{{ ansible_env.HOME }}/.pyenv/bin/pyenv install {{ python_version }}"
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf install python {{ python_version }} && {{ ansible_env.HOME }}/.asdf/bin/asdf global python {{ python_version }}"
       args:
-        creates: "{{ ansible_env.HOME }}/.pyenv/versions/{{ python_version }}"
+        creates: "{{ ansible_env.HOME }}/.asdf/installs/python"
       when: not skip_install_python | bool
 
-    - name: Install pipenv
-      command: "{{ ansible_env.HOME }}/.pyenv/shims/pip install --user pipenv"
+    - name: Install NodeJS {{ node_version }}
+      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf install nodejs {{ node_version }} && {{ ansible_env.HOME }}/.asdf/bin/asdf global node {{ node_version }}"
       args:
-        creates: "{{ ansible_env.HOME }}/.pyenv/shims/pipenv"
-      environment:
-        PYENV_VERSION: "{{ python_version }}"
+        creates: "{{ ansible_env.HOME }}/.asdf/installs/nodejs"
       when: not skip_install_python | bool
-
-    - name: Install python poetry
-      shell: "curl -sSL https://install.python-poetry.org | python3 -"
-      args:
-        creates: "{{ ansible_env.HOME }}/.poetry/bin"
-      when: not skip_install_python | bool
-
-    # END python requirements
 
     - name: Install oh-my-zsh
       git:
+        depth: 2
         repo: https://github.com/robbyrussell/oh-my-zsh.git
         dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
 
     - name: Install zsh syntax highlight
       git:
+        depth: 2
         repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
         dest: "{{ ansible_env.HOME }}/.oh-my-zsh/zsh-syntax-highlighting"
 
@@ -192,9 +199,4 @@
       copy:
         src: ./templates/tmux.conf
         dest: "{{ ansible_env.HOME }}/.tmux.conf"
-
-    - name: Install tfenv
-      git:
-        repo: https://github.com/tfutils/tfenv.git
-        dest: "{{ ansible_env.HOME }}/.tfenv"
 ...

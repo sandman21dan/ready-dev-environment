@@ -191,37 +191,10 @@ alias md5sum="md5 -r"
 # Fix gpg signing -- Tell gpg which tty
 export GPG_TTY=$(tty)
 
-# pyenv
-export PATH="$HOME/.pyenv/bin:$HOME/.local/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-# END pyenv
+# asdf
+. "$HOME/.asdf/asdf.sh"
 
-# python poetry
-export PATH="$HOME/.poetry/bin:$PATH"
-# END python poetry
-
-# nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-# END nvm
-
-# goenv
-export GOENV_ROOT="$HOME/.goenv"
-export PATH="$GOENV_ROOT/bin:$PATH"
-eval "$(goenv init -)"
-export PATH="$GOROOT/bin:$PATH"
-export PATH="$PATH:$GOPATH/bin"
-# END goenv
-
-# jenv
-export PATH="$HOME/.jenv/bin:$PATH"
-eval "$(jenv init -)"
-# END jenv
-
-# tfenv
-export PATH="$HOME/.tfenv/bin:$PATH"
-# END tfenv
+. "$HOME/.asdf/completions/asdf.bash"
+# END asdf
 
 source ~/.oh-my-zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
