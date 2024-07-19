@@ -13,6 +13,7 @@
       - curl
       - fzf
       - git
+      - jq
       - neovim
       - tmux
       - tree
