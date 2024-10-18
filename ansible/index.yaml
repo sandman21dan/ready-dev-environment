@@ -146,6 +146,11 @@
         url: https://raw.githubusercontent.com/rupa/z/master/z.sh
         dest: "{{ ansible_env.HOME }}"
 
+    - name: Scripts
+      synchronize:
+        src: ./scripts/
+        dest: "{{ ansible_env.HOME }}/.local/scripts/"
+
     - name: zshrc
       template:
         src: ./templates/zshrc

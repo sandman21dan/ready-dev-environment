@@ -107,6 +107,10 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+join-lines() {
+  ~/.local/scripts/join_lines.py "$@"
+}
+
 git_fuzzy_checkout() {
   local branches branch
   branches=$(git branch -a) &&
