@@ -7,8 +7,7 @@
     python_version: "latest"
     skip_install_node: false
     node_version: "latest"
-    os: linux
-    wsl: false
+    wsl: '{{ "micrsoft" in ansible_facts["kernel"] }}'
     common_dependencies:
       - curl
       - fzf
@@ -23,13 +22,6 @@
       - zsh
     apt_dependencies:
       - silversearcher-ag
-      # database drivers
-      - libpq-dev
-      - unixodbc-dev
-      # if sql_server_deps is truthy, add ms sql server deps
-      - "{{ sql_server_deps | bool | ternary('msodbcsql17', '') }}"
-      - "{{ sql_server_deps | bool | ternary('mssql-tools', '') }}"
-      # for building python
       - build-essential
       - libbz2-dev
       - libffi-dev
@@ -39,34 +31,38 @@
       - libssl-dev
       - python3-openssl
       - zlib1g-dev
-      # Redis cli
+      # database drivers
+      - libpq-dev
       - redis-tools
+      - unixodbc-dev
     brew_dependencies:
+      - asdf
       - the_silver_searcher
       # database drivers
       - libpq
+      - redis
       - unixodbc
       # for building python
       - coreutils
       - zlib
+    shorthand_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else '' }}"
+
 
   tasks:
-    - name: Add microsoft packages key
-      apt_key:
-        url: https://packages.microsoft.com/keys/microsoft.asc
-        state: present
-      become: yes
-      when: sql_server_deps | bool
+    - name: debug-arch
+      debug:
+        msg: "System architecture: {{ ansible_architecture }}"
 
-    - name: Add mssql packages
-      get_url:
-        url: https://packages.microsoft.com/config/ubuntu/18.04/prod.list
-        dest: /etc/apt/sources.list.d/mssql-release.list
-      become: yes
-      when: sql_server_deps | bool
+    - name: debug-os-family
+      debug:
+        msg: "OS Family: {{ ansible_facts['os_family'] }}"
+
+    - name: debug-is-wsl
+      debug:
+        msg: "Is WSL: {{ wsl }}"
 
     - name: APT Install dependencies
-      when: not os == "macos"
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
       apt:
         pkg: "{{ common_dependencies + apt_dependencies|select|list }}"
         state: present
@@ -78,56 +74,80 @@
       community.general.homebrew:
         pkg: "{{ common_dependencies + brew_dependencies }}"
         state: present
-      when: os == "macos"
+      when: ansible_facts['os_family'] == 'Darwin'
 
-    - name: Install asdf
-      git:
-        repo: https://github.com/asdf-vm/asdf.git
-        version: v0.14.0
-        depth: 2
-        dest: "{{ ansible_env.HOME }}/.asdf"
+    - name: Create home local bin directory
+      file:
+        path: "{{ ansible_env.HOME }}/.local/bin"
+        state: directory
+        mode: '0755'
+
+    - name: Check if asdf is already present
+      stat:
+        path: "{{ ansible_env.HOME }}/.local/bin/asdf"
+      register: asdf_check
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
+
+    - name: Download asdf tar.gz
+      get_url:
+        url: "https://github.com/asdf-vm/asdf/releases/download/v0.16.4/asdf-v0.16.4-linux-{{ shorthand_arch }}.tar.gz"
+        dest: "{{ ansible_env.HOME }}/asdf.tar.gz"
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
+
+    - name: Extract asdf tar.gz
+      ansible.builtin.unarchive:
+        src: "{{ ansible_env.HOME }}/asdf.tar.gz"
+        dest: "{{ ansible_env.HOME }}/.local/bin"
+        remote_src: true
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
+
+    - name: Delete asdf tar.gz
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/asdf.tar.gz"
+        state: absent
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
 
     - name: Install asdf python plugin
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add python"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add python"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/python"
 
     - name: Install asdf NodeJS plugin
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add nodejs"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add nodejs"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/nodejs"
 
     - name: Install asdf golang plugin
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add golang"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add golang"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/golang"
 
     - name: Install asdf Java plugin
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add java"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add java"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/java"
 
     - name: Install asdf Terraform plugin
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add terraform"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add terraform"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/terraform"
 
     - name: Install asdf aws-cli plugin
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf plugin add awscli"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add awscli"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/awscli"
 
     - name: Install python {{ python_version }}
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf install python {{ python_version }} && {{ ansible_env.HOME }}/.asdf/bin/asdf global python {{ python_version }}"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_version }}"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/installs/python"
       when: not skip_install_python | bool
 
     - name: Install NodeJS {{ node_version }}
-      command: "{{ ansible_env.HOME }}/.asdf/bin/asdf install nodejs {{ node_version }} && {{ ansible_env.HOME }}/.asdf/bin/asdf global node {{ node_version }}"
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf install nodejs {{ node_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home nodejs {{ node_version }}"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/installs/nodejs"
-      when: not skip_install_python | bool
+      when: not skip_install_node | bool
 
     - name: Install oh-my-zsh
       git:
@@ -205,4 +225,17 @@
       copy:
         src: ./templates/tmux.conf
         dest: "{{ ansible_env.HOME }}/.tmux.conf"
+
+    - name: Install Fabric AI (MacOS)
+      get_url:
+        url: https://github.com/danielmiessler/fabric/releases/latest/download/fabric-darwin-{{ shorthand_arch }}
+        dest: "{{ ansible_env.HOME }}/.local/bin/fabric"
+      when: ansible_facts['os_family'] == 'Darwin'
+
+    - name: Install Fabric AI (Linux)
+      get_url:
+        url: https://github.com/danielmiessler/fabric/releases/latest/download/fabric-linux-{{ shorthand_arch }}
+        dest: "{{ ansible_env.HOME }}/.local/bin/fabric"
+        mode: "0755"
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
 ...

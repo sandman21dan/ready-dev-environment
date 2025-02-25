@@ -12,6 +12,7 @@ This is based on my personal development preferences and is very opinionated
 
 - Pre-configured ZSH
 - Pre-configured tmux
+- `pbpaste` and `pbcopy` for Mac, Linux and WSL2
 - git
 - wget
 - asdf
@@ -19,6 +20,7 @@ This is based on my personal development preferences and is very opinionated
 - Python build dependencies
 - [ag](https://github.com/ggreer/the_silver_searcher)
 - Common database drivers
+- [Fabric](https://github.com/danielmiessler/fabric)
 
 ## Docker usage
 
@@ -47,11 +49,11 @@ can be persisted after you stop or restart the container
 The commands to run are the following:
 
 ```sh
-docker-compose up -d
+docker compose up -d
 ```
 
 ```sh
-docker exec -it dev zsh
+docker compose exec -it dev zsh
 ```
 
 ## Local usage
@@ -66,40 +68,14 @@ ansible-galaxy collection install community.general
 ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml
 ```
 
-For WSL:
-```sh
-ansible-galaxy collection install community.general
-ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml --extra-vars "wsl=true"
-```
+There's some variables that can be used to customise what gets installed
 
-There's some variables that can be used to customise what gets installed or for which OS
-
-* `sql_server_deps`: default `false`
-
-    Whether to install MS SQL Server drivers
-    Linux only
 * `python_version`: default `latest`
 * `skip_install_python`: default `false`
 * `node_version`: default `latest`
 * `skip_install_node`: default `false`
-* `os`: default `linux`
 
-    Options are `linux` and `macos`
-* `wsl`: default `false`
-
-    WSL toggle, adds scripts for pbcopy and pbpaste
-    that work between wsl2 and the Windows clipboard
-
-### MacOs
-
-For usage in MacOS the following commands needs to be run:
-
-```sh
-ansible-galaxy collection install community.general
-ansible-playbook --connection=local --inventory 127.0.0.1, index.yaml --extra-vars "os=macos"
-```
-
-currently `apt` and `brew` are the supported package managers but others can be easily swapped
+currently `apt` and `brew` are the supported package managers but others can be easily swapped or added
 
 ## How does it work?
 

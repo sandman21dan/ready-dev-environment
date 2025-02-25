@@ -107,8 +107,14 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
+SCRIPTS_DIR=$HOME/.local/scripts/
+
 join-lines() {
-  ~/.local/scripts/join_lines.py "$@"
+  python $SCRIPTS_DIR/join_lines.py "$@"
+}
+
+timestamp-diff() {
+  python $SCRIPTS_DIR/timestamp_diff.py "$@"
 }
 
 git_fuzzy_checkout() {
@@ -162,7 +168,7 @@ decrypt-file() {
 alias git-signature-work='git config --global user.signingkey <YOUR_WORK_SIGNING_KEY> && git config --global user.email <YOUR_WORK_EMAIL>'
 alias git-signature-personal='git config --global user.signingkey <YOUR_PERSONAL_SIGNING_KEY> && git config --global user.email <YOUR_PERSONAL_EMAIL>'
 
-{% if os == "linux" -%}
+{% if ansible_facts['os_family'] == "Debian" or ansible_facts['os_family'] == "Ubuntu" -%}
 {% if wsl|bool %}
 pbcopy () {
   tee <&0 | clip.exe
@@ -179,7 +185,7 @@ alias pbpaste='xclip -selection clipboard -o'
 {% endif -%}
 {% endif -%}
 
-{% if os == "macos" %}
+{% if ansible_facts['os_family'] == "Darwin" %}
 # Mac specific aliases
 
 # Use brew's git and not apple git
@@ -195,10 +201,13 @@ alias md5sum="md5 -r"
 # Fix gpg signing -- Tell gpg which tty
 export GPG_TTY=$(tty)
 
-# asdf
-. "$HOME/.asdf/asdf.sh"
+# Add local bin to path
+export PATH="$HOME/.local/bin:$PATH"
 
-. "$HOME/.asdf/completions/asdf.bash"
-# END asdf
+# asdf
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
 
 source ~/.oh-my-zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
+# Add shell utils for fzf
+source <(fzf --zsh)

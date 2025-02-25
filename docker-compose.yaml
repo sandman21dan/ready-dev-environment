@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   dev:
     image: sandman21dan/ready-dev-environment
