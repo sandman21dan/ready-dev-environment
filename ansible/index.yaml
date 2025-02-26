@@ -7,7 +7,7 @@
     python_version: "latest"
     skip_install_node: false
     node_version: "latest"
-    wsl: '{{ "micrsoft" in ansible_facts["kernel"] }}'
+    wsl: '{{ "microsoft" in ansible_facts["kernel"] }}'
     common_dependencies:
       - curl
       - fzf
