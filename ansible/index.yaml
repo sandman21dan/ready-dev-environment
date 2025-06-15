@@ -137,8 +137,18 @@
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/plugins/awscli"
 
-    - name: Install python {{ python_version }}
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_version }}"
+    - name: Detect latest stable CPython version
+      shell: "{{ ansible_env.HOME }}/.local/bin/asdf list all python | grep -E '^3\\.[0-9]+\\.[0-9]+$' | sort -V | tail -1"
+      register: latest_python_version
+      when: not skip_install_python | bool and python_version == "latest"
+
+    - name: Set Python version to install
+      set_fact:
+        python_install_version: "{{ latest_python_version.stdout if python_version == 'latest' else python_version }}"
+      when: not skip_install_python | bool
+
+    - name: Install python {{ python_install_version }}
+      command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_install_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_install_version }}"
       args:
         creates: "{{ ansible_env.HOME }}/.asdf/installs/python"
       when: not skip_install_python | bool
