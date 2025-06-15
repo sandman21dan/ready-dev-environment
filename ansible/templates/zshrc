@@ -153,7 +153,7 @@ review-merge-pr () {
 }
 
 send-to-nas() {
-  rsync -aP $1 nas:/mnt/public/$2
+  rsync -rtP --chown=home:allusers $1 nas:/mnt/public/$2
 }
 
 encrypt-file() {
