@@ -56,6 +56,30 @@ docker compose up -d
 docker compose exec -it dev zsh
 ```
 
+## Building the image locally
+
+You can build the Docker image locally using Docker Buildx for multi-platform support:
+
+### Build for AMD64 (x86_64)
+```sh
+docker buildx build --platform linux/amd64 -t ready-dev-environment:amd64 .
+```
+
+### Build for ARM64 (Apple Silicon/M1/M2)
+```sh
+docker buildx build --platform linux/arm64 -t ready-dev-environment:arm64 .
+```
+
+### Build for both architectures
+```sh
+docker buildx build --platform linux/amd64,linux/arm64 -t ready-dev-environment:latest .
+```
+
+**Note:** Multi-platform builds require Docker Buildx to be enabled. You can enable it with:
+```sh
+docker buildx create --use
+```
+
 ## Local usage
 
 To get the automated setup running locally, `Ansible` must already be installed, check

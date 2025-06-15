@@ -1,0 +1,16 @@
+---
+# Fabric AI installation tasks
+
+- name: Install Fabric AI (MacOS)
+  get_url:
+    url: https://github.com/danielmiessler/fabric/releases/latest/download/fabric-darwin-{{ shorthand_arch }}
+    dest: "{{ ansible_env.HOME }}/.local/bin/fabric"
+    mode: "0755"
+  when: ansible_facts['os_family'] == 'Darwin'
+
+- name: Install Fabric AI (Linux)
+  get_url:
+    url: https://github.com/danielmiessler/fabric/releases/latest/download/fabric-linux-{{ shorthand_arch }}
+    dest: "{{ ansible_env.HOME }}/.local/bin/fabric"
+    mode: "0755"
+  when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']

@@ -17,4 +17,4 @@ RUN ansible-galaxy collection install community.general && \
   ansible-playbook --connection=local --inventory 127.0.0.1, /home/docker/ansible-playbook/index.yaml --extra-vars "skip_install_node=true" && \
   sudo rm -rf /home/docker/ansible-playbook
 
-CMD tail -f /dev/null
+CMD ["tail", "-f", "/dev/null"]

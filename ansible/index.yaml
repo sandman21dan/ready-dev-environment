@@ -82,82 +82,9 @@
         state: directory
         mode: '0755'
 
-    - name: Check if asdf is already present
-      stat:
-        path: "{{ ansible_env.HOME }}/.local/bin/asdf"
-      register: asdf_check
-      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
-
-    - name: Download asdf tar.gz
-      get_url:
-        url: "https://github.com/asdf-vm/asdf/releases/download/v0.16.4/asdf-v0.16.4-linux-{{ shorthand_arch }}.tar.gz"
-        dest: "{{ ansible_env.HOME }}/asdf.tar.gz"
-      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
-
-    - name: Extract asdf tar.gz
-      ansible.builtin.unarchive:
-        src: "{{ ansible_env.HOME }}/asdf.tar.gz"
-        dest: "{{ ansible_env.HOME }}/.local/bin"
-        remote_src: true
-      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
-
-    - name: Delete asdf tar.gz
-      ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/asdf.tar.gz"
-        state: absent
-      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
-
-    - name: Install asdf python plugin
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add python"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/plugins/python"
-
-    - name: Install asdf NodeJS plugin
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add nodejs"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/plugins/nodejs"
-
-    - name: Install asdf golang plugin
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add golang"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/plugins/golang"
-
-    - name: Install asdf Java plugin
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add java"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/plugins/java"
-
-    - name: Install asdf Terraform plugin
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add terraform"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/plugins/terraform"
-
-    - name: Install asdf aws-cli plugin
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add awscli"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/plugins/awscli"
-
-    - name: Detect latest stable CPython version
-      shell: "{{ ansible_env.HOME }}/.local/bin/asdf list all python | grep -E '^3\\.[0-9]+\\.[0-9]+$' | sort -V | tail -1"
-      register: latest_python_version
-      when: not skip_install_python | bool and python_version == "latest"
-
-    - name: Set Python version to install
-      set_fact:
-        python_install_version: "{{ latest_python_version.stdout if python_version == 'latest' else python_version }}"
-      when: not skip_install_python | bool
-
-    - name: Install python {{ python_install_version }}
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_install_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_install_version }}"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/installs/python"
-      when: not skip_install_python | bool
-
-    - name: Install NodeJS {{ node_version }}
-      command: "{{ ansible_env.HOME }}/.local/bin/asdf install nodejs {{ node_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home nodejs {{ node_version }}"
-      args:
-        creates: "{{ ansible_env.HOME }}/.asdf/installs/nodejs"
-      when: not skip_install_node | bool
+    - name: Setup asdf and install languages
+      include_role:
+        name: asdf
 
     - name: Install oh-my-zsh
       git:
@@ -202,34 +129,9 @@
         dest: "{{ ansible_env.HOME }}/.vimrc"
 
     # NeoVim configuration
-
-    - name: Create directory for vim-plug
-      file:
-        path: "{{ ansible_env.HOME }}/.local/share/nvim/site/autoload"
-        state: directory
-
-    - name: Install vim-plug for neovim
-      get_url:
-        url: https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        dest: "{{ ansible_env.HOME }}/.local/share/nvim/site/autoload/plug.vim"
-
-    - name: nvim config dir
-      file:
-        path: "{{ ansible_env.HOME }}/.config/nvim"
-        state: directory
-        recurse: true
-
-    - name: nvim init file
-      copy:
-        src: ./templates/init.vim
-        dest: "{{ ansible_env.HOME }}/.config/nvim/init.vim"
-
-    - name: Install nvim dependencies
-      command: nvim --headless +PlugInstall +qall
-      args:
-        creates: "{{ ansible_env.HOME }}/.local/shared/nvim/site/plugged/vim/autoload/dracula.vim"
-
-    # END NeoVim configuration
+    - name: Configure NeoVim
+      include_role:
+        name: neovim
 
     - name: tmux config
       copy:
@@ -248,16 +150,7 @@
         dest: "{{ ansible_env.HOME }}/.local/bin/git-open"
         mode: "0755"
 
-    - name: Install Fabric AI (MacOS)
-      get_url:
-        url: https://github.com/danielmiessler/fabric/releases/latest/download/fabric-darwin-{{ shorthand_arch }}
-        dest: "{{ ansible_env.HOME }}/.local/bin/fabric"
-      when: ansible_facts['os_family'] == 'Darwin'
-
-    - name: Install Fabric AI (Linux)
-      get_url:
-        url: https://github.com/danielmiessler/fabric/releases/latest/download/fabric-linux-{{ shorthand_arch }}
-        dest: "{{ ansible_env.HOME }}/.local/bin/fabric"
-        mode: "0755"
-      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
+    - name: Install Fabric AI
+      include_role:
+        name: fabric
 ...
