@@ -4,11 +4,11 @@ services:
     # build: ./
     container_name: dev
     ports:
-      - '1234:1234'
+      - "1234:1234"
     volumes:
-      - '~/development:/home/docker/development'
-      - '~/.ssh:/home/docker/.ssh'
-      - 'dev-box:/home/docker'
+      - "~/development:/home/docker/development"
+      - "~/.ssh:/home/docker/.ssh"
+      - "dev-box:/home/docker"
 
 volumes:
   dev-box:

@@ -47,7 +47,6 @@
       - zlib
     shorthand_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else '' }}"
 
-
   tasks:
     - name: debug-arch
       debug:
@@ -80,7 +79,7 @@
       file:
         path: "{{ ansible_env.HOME }}/.local/bin"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Setup asdf and install languages
       include_role:
@@ -145,5 +144,3 @@
     - name: Install Fabric AI
       include_role:
         name: fabric
-
-...
