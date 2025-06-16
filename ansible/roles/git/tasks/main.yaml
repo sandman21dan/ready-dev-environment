@@ -1,0 +1,12 @@
+---
+- name: Install git-fire
+  get_url:
+    url: https://raw.githubusercontent.com/qw3rtman/git-fire/refs/heads/master/git-fire
+    dest: "{{ ansible_env.HOME }}/.local/bin/git-fire"
+    mode: "0755"
+
+- name: Install git-open
+  get_url:
+    url: https://raw.githubusercontent.com/paulirish/git-open/refs/heads/master/git-open
+    dest: "{{ ansible_env.HOME }}/.local/bin/git-open"
+    mode: "0755"
