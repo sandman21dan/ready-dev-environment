@@ -133,7 +133,7 @@
         name: neovim
 
     - name: tmux config
-      copy:
+      template:
         src: ./templates/tmux.conf
         dest: "{{ ansible_env.HOME }}/.tmux.conf"
 
