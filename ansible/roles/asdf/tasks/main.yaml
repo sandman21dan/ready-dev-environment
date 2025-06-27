@@ -36,6 +36,11 @@
   args:
     creates: "{{ ansible_env.HOME }}/.asdf/plugins/nodejs"
 
+- name: Add default NPM global packages
+  template:
+    src: default-npm-packages
+    dest: "{{ ansible_env.HOME }}/.default-npm-packages"
+
 - name: Install asdf golang plugin
   command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add golang"
   args:

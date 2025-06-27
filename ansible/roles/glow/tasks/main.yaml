@@ -1,0 +1,27 @@
+---
+- name: Create keyrings directory for Charm repository
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Add Charm repository GPG key
+  shell: "curl -fsSL https://repo.charm.sh/apt/gpg.key | gpg --dearmor -o /etc/apt/keyrings/charm.gpg"
+  args:
+    creates: /etc/apt/keyrings/charm.gpg
+  become: yes
+
+- name: Add Charm repository to sources
+  copy:
+    content: "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *"
+    dest: /etc/apt/sources.list.d/charm.list
+    mode: '0644'
+  become: yes
+
+- name: Update apt cache and install glow
+  apt:
+    name: glow
+    state: present
+    update_cache: yes
+  become: yes

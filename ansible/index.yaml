@@ -37,6 +37,7 @@
       - unixodbc-dev
     brew_dependencies:
       - asdf
+      - glow
       - the_silver_searcher
       # database drivers
       - libpq
@@ -60,6 +61,12 @@
       debug:
         msg: "Is WSL: {{ wsl }}"
 
+    - name: Update apt cache
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
+      apt:
+        update_cache: yes
+      become: yes
+
     - name: APT Install dependencies
       when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
       apt:
@@ -68,6 +75,11 @@
       become: yes
       environment:
         ACCEPT_EULA: Y
+
+    - name: Install glow [Linux only]
+      include_role:
+        name: glow
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
 
     - name: Brew install dependencies
       community.general.homebrew:
