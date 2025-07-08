@@ -1,0 +1,82 @@
+---
+- name: Fetch latest fzf release info
+  uri:
+    url: "https://api.github.com/repos/junegunn/fzf/releases?per_page=1"
+    method: GET
+    headers:
+      Accept: "application/vnd.github+json"
+      X-GitHub-Api-Version: "2022-11-28"
+    return_content: true
+  register: fzf_release_info
+
+- name: Extract latest release tag and assets
+  set_fact:
+    fzf_latest_tag: "{{ fzf_release_info.json[0].tag_name }}"
+    fzf_assets: "{{ fzf_release_info.json[0].assets }}"
+
+- name: Find correct Linux binary for architecture
+  set_fact:
+    fzf_binary_asset: "{{ fzf_assets | selectattr('name', 'match', 'fzf-.*-linux_' + shorthand_arch + '\\.tar\\.gz') | first }}"
+
+- name: Debug selected binary
+  debug:
+    msg: "Selected binary: {{ fzf_binary_asset.name }}"
+
+- name: Check if fzf is already installed and up to date
+  stat:
+    path: "{{ ansible_env.HOME }}/.local/bin/fzf"
+  register: fzf_binary_stat
+
+- name: Get current fzf version if installed
+  command: "{{ ansible_env.HOME }}/.local/bin/fzf --version"
+  register: fzf_current_version
+  failed_when: false
+  changed_when: false
+  when: fzf_binary_stat.stat.exists
+
+- name: Check if update is needed
+  set_fact:
+    fzf_needs_update: "{{ not fzf_binary_stat.stat.exists or (fzf_current_version.stdout is defined and fzf_latest_tag not in fzf_current_version.stdout) }}"
+
+- name: Download and install fzf
+  block:
+    - name: Create temporary directory for download
+      tempfile:
+        state: directory
+        suffix: fzf
+      register: temp_dir
+
+    - name: Download fzf binary
+      get_url:
+        url: "{{ fzf_binary_asset.browser_download_url }}"
+        dest: "{{ temp_dir.path }}/fzf.tar.gz"
+        mode: '0644'
+
+    - name: Extract fzf binary
+      unarchive:
+        src: "{{ temp_dir.path }}/fzf.tar.gz"
+        dest: "{{ temp_dir.path }}"
+        remote_src: true
+
+    - name: Install fzf to ~/.local/bin
+      copy:
+        src: "{{ temp_dir.path }}/fzf"
+        dest: "{{ ansible_env.HOME }}/.local/bin/fzf"
+        mode: '0755'
+        remote_src: true
+
+    - name: Clean up temporary directory
+      file:
+        path: "{{ temp_dir.path }}"
+        state: absent
+
+  when: fzf_needs_update
+
+- name: Verify fzf installation
+  command: "{{ ansible_env.HOME }}/.local/bin/fzf --version"
+  register: fzf_installed_version
+  changed_when: false
+
+- name: Display installed fzf version
+  debug:
+    msg: "fzf installed version: {{ fzf_installed_version.stdout }}"

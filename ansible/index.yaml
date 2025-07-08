@@ -10,7 +10,6 @@
     wsl: '{{ "microsoft" in ansible_facts["kernel"] }}'
     common_dependencies:
       - curl
-      - fzf
       - git
       - jq
       - neovim
@@ -37,6 +36,7 @@
       - unixodbc-dev
     brew_dependencies:
       - asdf
+      - fzf
       - glow
       - the_silver_searcher
       # database drivers
@@ -61,6 +61,12 @@
       debug:
         msg: "Is WSL: {{ wsl }}"
 
+    - name: Create home local bin directory
+      file:
+        path: "{{ ansible_env.HOME }}/.local/bin"
+        state: directory
+        mode: "0755"
+
     - name: Update apt cache
       when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
       apt:
@@ -81,17 +87,16 @@
         name: glow
       when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
 
+    - name: Install fzf [Linux only]
+      include_role:
+        name: fzf
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
+
     - name: Brew install dependencies
       community.general.homebrew:
         pkg: "{{ common_dependencies + brew_dependencies }}"
         state: present
       when: ansible_facts['os_family'] == 'Darwin'
-
-    - name: Create home local bin directory
-      file:
-        path: "{{ ansible_env.HOME }}/.local/bin"
-        state: directory
-        mode: "0755"
 
     - name: Setup asdf and install languages
       include_role:
