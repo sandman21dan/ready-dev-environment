@@ -2,6 +2,7 @@
 - hosts: all
 
   vars:
+    ansible_python_interpreter: /usr/bin/python3
     sql_server_deps: false
     skip_install_python: false
     python_version: "latest"
