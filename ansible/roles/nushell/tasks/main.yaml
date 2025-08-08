@@ -1,0 +1,32 @@
+---
+- name: Download nushell gpg key
+  get_url:
+    url: https://apt.fury.io/nushell/gpg.key
+    dest: /tmp/nushell.key
+    mode: '0644'
+  become: no
+
+- name: Dearmor nushell gpg key
+  shell: "cat /tmp/nushell.key | gpg --dearmor > /usr/share/keyrings/nushell-keyring.gpg"
+  become: true
+  args:
+    creates: /usr/share/keyrings/nushell-keyring.gpg
+
+- name: Add nushell repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/nushell-keyring.gpg] https://apt.fury.io/nushell/ /"
+    state: present
+    filename: nushell
+  become: true
+
+- name: Update apt cache and install nushell
+  apt:
+    name: nushell
+    update_cache: yes
+  become: true
+
+- name: Clean up temporary key file
+  file:
+    path: /tmp/nushell.key
+    state: absent
+  become: no

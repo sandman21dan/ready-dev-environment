@@ -13,6 +13,7 @@
       - git
       - jq
       - neovim
+      - nushell
       - tmux
       - tree
       - tree
@@ -72,6 +73,11 @@
       apt:
         update_cache: yes
       become: yes
+
+    - name: Install nushell [Linux only]
+      include_role:
+        name: nushell
+      when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
 
     - name: APT Install dependencies
       when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
