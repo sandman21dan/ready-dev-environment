@@ -9,7 +9,7 @@
 
 - name: Download asdf tar.gz
   get_url:
-    url: "https://github.com/asdf-vm/asdf/releases/download/v0.16.4/asdf-v0.16.4-linux-{{ shorthand_arch }}.tar.gz"
+    url: "https://github.com/asdf-vm/asdf/releases/download/v0.18.1/asdf-v0.18.1-linux-{{ shorthand_arch }}.tar.gz"
     dest: "{{ ansible_env.HOME }}/asdf.tar.gz"
   when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
 
@@ -72,13 +72,21 @@
   when: not skip_install_python | bool
 
 - name: Install python {{ python_install_version }}
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_install_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_install_version }}"
+  command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_install_version }}"
   args:
     creates: "{{ ansible_env.HOME }}/.asdf/installs/python"
   when: not skip_install_python | bool
 
+- name: Set global python version
+  command: "{{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_install_version }}"
+  when: not skip_install_python | bool
+
 - name: Install NodeJS {{ node_version }}
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf install nodejs {{ node_version }} && {{ ansible_env.HOME }}/.local/bin/asdf set --home nodejs {{ node_version }}"
+  command: "{{ ansible_env.HOME }}/.local/bin/asdf install nodejs {{ node_version }}"
   args:
     creates: "{{ ansible_env.HOME }}/.asdf/installs/nodejs"
+  when: not skip_install_node | bool
+
+- name: Set global NodeJS version
+  command: "{{ ansible_env.HOME }}/.local/bin/asdf set --home nodejs {{ node_version }}"
   when: not skip_install_node | bool

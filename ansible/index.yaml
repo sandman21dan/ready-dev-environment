@@ -113,6 +113,10 @@
       include_role:
         name: my-scripts
 
+    - name: Install Claude Code and language server plugins
+      include_role:
+        name: claude-code
+
     - name: Install oh-my-zsh
       git:
         depth: 2

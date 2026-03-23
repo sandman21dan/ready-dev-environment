@@ -13,6 +13,12 @@
 - name: Set global Go version
   command: "{{ ansible_env.HOME }}/.local/bin/asdf set --home golang {{ latest_go_version.stdout }}"
 
+- name: Install gopls
+  shell: |
+    export PATH="{{ ansible_env.HOME }}/.asdf/shims:{{ ansible_env.HOME }}/.local/bin:$PATH"
+    export GOPATH="{{ ansible_env.HOME }}/.local/go"
+    go install golang.org/x/tools/gopls@latest
+
 - name: Create temp build directory
   file:
     path: "{{ ansible_env.HOME }}/.local/tmp/my-scripts-build"
