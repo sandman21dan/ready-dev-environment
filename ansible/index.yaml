@@ -169,6 +169,3 @@
       include_role:
         name: git
 
-    - name: Install Fabric AI
-      include_role:
-        name: fabric
