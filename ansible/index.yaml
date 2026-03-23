@@ -109,6 +109,10 @@
       include_role:
         name: asdf
 
+    - name: Install my-scripts CLI
+      include_role:
+        name: my-scripts
+
     - name: Install oh-my-zsh
       git:
         depth: 2

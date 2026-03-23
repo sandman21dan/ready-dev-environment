@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# @description: Generate padding spaces based on minute and an optional seed.
 
 import argparse
 import datetime

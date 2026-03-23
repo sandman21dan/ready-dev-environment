@@ -1,8 +1,4 @@
-"""
-This script reads a single string from STDIN, splits it into multiple
-lines based on a specified delimiter, and prints each part on a new line
-after stripping leading/trailing whitespace from it.
-"""
+# @description: This script reads a single string from STDIN, splits it into multiple lines based on a specified delimiter, and prints each part on a new line after stripping leading/trailing whitespace from it.
 import sys
 import argparse
 

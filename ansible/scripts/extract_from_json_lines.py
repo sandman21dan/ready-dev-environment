@@ -1,3 +1,4 @@
+# @description: Extracts a specific field from JSON Lines input.
 import argparse
 import json
 import sys
@@ -68,7 +69,7 @@ def main():
                 else:
                     found = False
                     break
-            
+
             if found:
                 if isinstance(current_value, (dict, list)):
                     print(json.dumps(current_value))

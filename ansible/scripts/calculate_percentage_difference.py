@@ -1,6 +1,5 @@
+# @description: This script calculates and displays various differences between an initial and a new value provided as command-line arguments.
 """
-This script calculates and displays various differences between an initial
-and a new value provided as command-line arguments.
 
 It computes:
 1. The decimal difference (new_value - initial_value).

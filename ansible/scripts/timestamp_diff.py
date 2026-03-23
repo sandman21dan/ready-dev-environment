@@ -1,10 +1,4 @@
-"""
-This script calculates the time difference (timedelta) between two timestamps
-provided as command-line arguments.
-The timestamps are expected to be in the format "YYYY-MM-DDTHH:MM:SS.sss+0000".
-The script will print the resulting timedelta object to STDOUT.
-"""
-
+# @description: This script calculates the time difference (timedelta) between two timestamps provided as command-line arguments.
 import argparse
 from datetime import datetime
 

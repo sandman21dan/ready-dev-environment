@@ -1,9 +1,4 @@
-"""
-This script reads a comma-separated string of camelCase words from STDIN,
-converts each word to snake_case, and then prints the comma-separated
-snake_case words to STDOUT.
-"""
-
+# @description: This script reads a comma-separated string of camelCase words from STDIN, converts each word to snake_case, and then prints the comma-separated snake_case words to STDOUT.
 import sys
 import re
 

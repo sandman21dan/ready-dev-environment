@@ -1,8 +1,4 @@
-"""
-This script reads lines from STDIN, strips leading/trailing whitespace,
-filters out empty lines, and then joins the remaining lines into a
-single string using a specified delimiter.
-"""
+# @description: This script reads lines from STDIN, strips leading/trailing whitespace, filters out empty lines, and then joins the remaining lines into a single string using a specified delimiter.
 import sys
 import argparse
 
