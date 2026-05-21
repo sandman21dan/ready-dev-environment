@@ -48,12 +48,12 @@
       # for building python
       - coreutils
       - zlib
-    shorthand_arch: "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture in ['aarch64', 'arm64'] else '' }}"
+    shorthand_arch: "{{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' if ansible_facts['architecture'] in ['aarch64', 'arm64'] else '' }}"
 
   tasks:
     - name: debug-arch
       debug:
-        msg: "System architecture: {{ ansible_architecture }}"
+        msg: "System architecture: {{ ansible_facts['architecture'] }}"
 
     - name: debug-os-family
       debug:
@@ -65,7 +65,7 @@
 
     - name: Create home local bin directory
       file:
-        path: "{{ ansible_env.HOME }}/.local/bin"
+        path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
         state: directory
         mode: "0755"
 
@@ -125,43 +125,43 @@
       git:
         depth: 2
         repo: https://github.com/robbyrussell/oh-my-zsh.git
-        dest: "{{ ansible_env.HOME }}/.oh-my-zsh"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.oh-my-zsh"
 
     - name: Install zsh syntax highlight
       git:
         depth: 2
         repo: https://github.com/zsh-users/zsh-syntax-highlighting.git
-        dest: "{{ ansible_env.HOME }}/.oh-my-zsh/zsh-syntax-highlighting"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.oh-my-zsh/zsh-syntax-highlighting"
 
     - name: Install z
       get_url:
         url: https://raw.githubusercontent.com/rupa/z/master/z.sh
-        dest: "{{ ansible_env.HOME }}"
+        dest: "{{ ansible_facts['env']['HOME'] }}"
 
     - name: Scripts
       synchronize:
         src: ./scripts/
-        dest: "{{ ansible_env.HOME }}/.local/scripts/"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/scripts/"
 
     - name: zshrc
       template:
         src: ./templates/zshrc
-        dest: "{{ ansible_env.HOME }}/.zshrc"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.zshrc"
 
     - name: Create vim themes path
       file:
-        path: "{{ ansible_env.HOME }}/.vim/colors"
+        path: "{{ ansible_facts['env']['HOME'] }}/.vim/colors"
         state: directory
 
     - name: Download vim monokai
       get_url:
         url: https://raw.githubusercontent.com/sickill/vim-monokai/master/colors/monokai.vim
-        dest: "{{ ansible_env.HOME }}/.vim/colors"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.vim/colors"
 
     - name: vimrc
       copy:
         src: ./templates/vimrc
-        dest: "{{ ansible_env.HOME }}/.vimrc"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.vimrc"
 
     # NeoVim configuration
     - name: Configure NeoVim
@@ -171,7 +171,7 @@
     - name: tmux config
       template:
         src: ./templates/tmux.conf
-        dest: "{{ ansible_env.HOME }}/.tmux.conf"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.tmux.conf"
 
     - name: Setup Git plugins
       include_role:

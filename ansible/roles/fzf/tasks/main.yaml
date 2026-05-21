@@ -24,11 +24,11 @@
 
 - name: Check if fzf is already installed and up to date
   stat:
-    path: "{{ ansible_env.HOME }}/.local/bin/fzf"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/fzf"
   register: fzf_binary_stat
 
 - name: Get current fzf version if installed
-  command: "{{ ansible_env.HOME }}/.local/bin/fzf --version"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/fzf --version"
   register: fzf_current_version
   failed_when: false
   changed_when: false
@@ -61,7 +61,7 @@
     - name: Install fzf to ~/.local/bin
       copy:
         src: "{{ temp_dir.path }}/fzf"
-        dest: "{{ ansible_env.HOME }}/.local/bin/fzf"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/fzf"
         mode: "0755"
         remote_src: true
 
@@ -73,7 +73,7 @@
   when: fzf_needs_update
 
 - name: Verify fzf installation
-  command: "{{ ansible_env.HOME }}/.local/bin/fzf --version"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/fzf --version"
   register: fzf_installed_version
   changed_when: false
 

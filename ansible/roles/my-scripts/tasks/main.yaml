@@ -2,57 +2,57 @@
 # Build and install the my-scripts CLI tool
 
 - name: Detect latest stable Go version
-  shell: "{{ ansible_env.HOME }}/.local/bin/asdf list all golang | grep -E '^[0-9]+\\.[0-9]+(\\.[0-9]+)?$' | sort -V | tail -1"
+  shell: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf list all golang | grep -E '^[0-9]+\\.[0-9]+(\\.[0-9]+)?$' | sort -V | tail -1"
   register: latest_go_version
 
 - name: Install Go via asdf
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf install golang {{ latest_go_version.stdout }}"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf install golang {{ latest_go_version.stdout }}"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/installs/golang"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/installs/golang"
 
 - name: Set global Go version
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf set --home golang {{ latest_go_version.stdout }}"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf set --home golang {{ latest_go_version.stdout }}"
 
 - name: Install gopls
   shell: |
-    export PATH="{{ ansible_env.HOME }}/.asdf/shims:{{ ansible_env.HOME }}/.local/bin:$PATH"
-    export GOPATH="{{ ansible_env.HOME }}/.local/go"
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH"
+    export GOPATH="{{ ansible_facts['env']['HOME'] }}/.local/go"
     go install golang.org/x/tools/gopls@latest
 
 - name: Create temp build directory
   file:
-    path: "{{ ansible_env.HOME }}/.local/tmp/my-scripts-build"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-build"
     state: directory
     mode: "0755"
 
 - name: Copy main.go
   copy:
     src: my-scripts-cli/main.go
-    dest: "{{ ansible_env.HOME }}/.local/tmp/my-scripts-build/main.go"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-build/main.go"
 
 - name: Copy go.mod
   copy:
     src: my-scripts-cli/go.mod
-    dest: "{{ ansible_env.HOME }}/.local/tmp/my-scripts-build/go.mod"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-build/go.mod"
 
 - name: Copy go.sum
   copy:
     src: my-scripts-cli/go.sum
-    dest: "{{ ansible_env.HOME }}/.local/tmp/my-scripts-build/go.sum"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-build/go.sum"
 
 - name: Build my-scripts binary
   shell: |
-    export PATH="{{ ansible_env.HOME }}/.asdf/shims:{{ ansible_env.HOME }}/.local/bin:$PATH"
-    export GOPATH="{{ ansible_env.HOME }}/.local/go"
-    cd {{ ansible_env.HOME }}/.local/tmp/my-scripts-build
-    go build -o {{ ansible_env.HOME }}/.local/bin/my-scripts .
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH"
+    export GOPATH="{{ ansible_facts['env']['HOME'] }}/.local/go"
+    cd {{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-build
+    go build -o {{ ansible_facts['env']['HOME'] }}/.local/bin/my-scripts .
 
 - name: Remove temp build directory
   file:
-    path: "{{ ansible_env.HOME }}/.local/tmp/my-scripts-build"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-build"
     state: absent
 
 - name: Set executable permissions on my-scripts
   file:
-    path: "{{ ansible_env.HOME }}/.local/bin/my-scripts"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/my-scripts"
     mode: "0755"

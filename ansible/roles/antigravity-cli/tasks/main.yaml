@@ -2,4 +2,4 @@
 - name: Install antigravity-cli
   shell: curl -fsSL https://antigravity.google/cli/install.sh | bash
   args:
-    creates: "{{ ansible_env.HOME }}/.local/bin/agy"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/agy"

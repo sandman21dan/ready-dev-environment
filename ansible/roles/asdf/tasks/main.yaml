@@ -3,66 +3,66 @@
 
 - name: Check if asdf is already present
   stat:
-    path: "{{ ansible_env.HOME }}/.local/bin/asdf"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf"
   register: asdf_check
   when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
 
 - name: Download asdf tar.gz
   get_url:
     url: "https://github.com/asdf-vm/asdf/releases/download/v0.18.1/asdf-v0.18.1-linux-{{ shorthand_arch }}.tar.gz"
-    dest: "{{ ansible_env.HOME }}/asdf.tar.gz"
+    dest: "{{ ansible_facts['env']['HOME'] }}/asdf.tar.gz"
   when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
 
 - name: Extract asdf tar.gz
   ansible.builtin.unarchive:
-    src: "{{ ansible_env.HOME }}/asdf.tar.gz"
-    dest: "{{ ansible_env.HOME }}/.local/bin"
+    src: "{{ ansible_facts['env']['HOME'] }}/asdf.tar.gz"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
     remote_src: true
   when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
 
 - name: Delete asdf tar.gz
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/asdf.tar.gz"
+    path: "{{ ansible_facts['env']['HOME'] }}/asdf.tar.gz"
     state: absent
   when: ansible_facts['os_family'] in ['Debian', 'Ubuntu'] and shorthand_arch != '' and not asdf_check.stat.exists
 
 - name: Install asdf python plugin
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add python"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf plugin add python"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/plugins/python"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/plugins/python"
 
 - name: Install asdf NodeJS plugin
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add nodejs"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf plugin add nodejs"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/plugins/nodejs"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/plugins/nodejs"
 
 - name: Add default NPM global packages
   template:
     src: default-npm-packages
-    dest: "{{ ansible_env.HOME }}/.default-npm-packages"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.default-npm-packages"
 
 - name: Install asdf golang plugin
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add golang"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf plugin add golang"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/plugins/golang"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/plugins/golang"
 
 - name: Install asdf Java plugin
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add java"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf plugin add java"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/plugins/java"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/plugins/java"
 
 - name: Install asdf Terraform plugin
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add terraform"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf plugin add terraform"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/plugins/terraform"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/plugins/terraform"
 
 - name: Install asdf aws-cli plugin
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf plugin add awscli"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf plugin add awscli"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/plugins/awscli"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/plugins/awscli"
 
 - name: Detect latest stable CPython version
-  shell: "{{ ansible_env.HOME }}/.local/bin/asdf list all python | grep -E '^3\\.[0-9]+\\.[0-9]+$' | sort -V | tail -1"
+  shell: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf list all python | grep -E '^3\\.[0-9]+\\.[0-9]+$' | sort -V | tail -1"
   register: latest_python_version
   when: not skip_install_python | bool and python_version == "latest"
 
@@ -72,21 +72,21 @@
   when: not skip_install_python | bool
 
 - name: Install python {{ python_install_version }}
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf install python {{ python_install_version }}"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf install python {{ python_install_version }}"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/installs/python"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/installs/python"
   when: not skip_install_python | bool
 
 - name: Set global python version
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf set --home python {{ python_install_version }}"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf set --home python {{ python_install_version }}"
   when: not skip_install_python | bool
 
 - name: Install NodeJS {{ node_version }}
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf install nodejs {{ node_version }}"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf install nodejs {{ node_version }}"
   args:
-    creates: "{{ ansible_env.HOME }}/.asdf/installs/nodejs"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/installs/nodejs"
   when: not skip_install_node | bool
 
 - name: Set global NodeJS version
-  command: "{{ ansible_env.HOME }}/.local/bin/asdf set --home nodejs {{ node_version }}"
+  command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf set --home nodejs {{ node_version }}"
   when: not skip_install_node | bool

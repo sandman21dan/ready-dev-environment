@@ -3,7 +3,7 @@
 
 - name: Check if claude is already installed
   stat:
-    path: "{{ ansible_env.HOME }}/.local/bin/claude"
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
   register: claude_check
 
 - name: Install Claude Code via native installer
@@ -13,29 +13,29 @@
 - name: Install typescript-lsp plugin
   when: false
   shell: >
-    export PATH="{{ ansible_env.HOME }}/.local/bin:$PATH" &&
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH" &&
     claude plugin install typescript-lsp@claude-plugins-official
 
 - name: Install gopls plugin
   when: false
   shell: >
-    export PATH="{{ ansible_env.HOME }}/.local/bin:$PATH" &&
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH" &&
     claude plugin install gopls-lsp@claude-plugins-official
 
 - name: Install pyright plugin
   when: false
   shell: >
-    export PATH="{{ ansible_env.HOME }}/.local/bin:$PATH" &&
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH" &&
     claude plugin install pyright@claude-plugins-official
 
 - name: Add svelte-lsp from marketplace
   when: false
   shell: >
-    export PATH="{{ ansible_env.HOME }}/.local/bin:$PATH" &&
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH" &&
     claude plugin marketplace add RA1NCS/svelte-lsp
 
 - name: Install svelte-lsp plugin
   when: false
   shell: >
-    export PATH="{{ ansible_env.HOME }}/.local/bin:$PATH" &&
+    export PATH="{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH" &&
     claude plugin install svelte-lsp@svelte-lsp
