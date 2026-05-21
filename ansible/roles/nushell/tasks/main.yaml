@@ -3,7 +3,7 @@
   get_url:
     url: https://apt.fury.io/nushell/gpg.key
     dest: /tmp/nushell.key
-    mode: '0644'
+    mode: "0644"
   become: no
 
 - name: Dearmor nushell gpg key

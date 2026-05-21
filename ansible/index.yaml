@@ -117,6 +117,10 @@
       include_role:
         name: claude-code
 
+    - name: Install antigravity-cli
+      include_role:
+        name: antigravity-cli
+
     - name: Install oh-my-zsh
       git:
         depth: 2
@@ -172,4 +176,3 @@
     - name: Setup Git plugins
       include_role:
         name: git
-

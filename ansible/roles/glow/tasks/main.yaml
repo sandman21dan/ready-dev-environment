@@ -3,7 +3,7 @@
   file:
     path: /etc/apt/keyrings
     state: directory
-    mode: '0755'
+    mode: "0755"
   become: yes
 
 - name: Add Charm repository GPG key
@@ -16,7 +16,7 @@
   copy:
     content: "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *"
     dest: /etc/apt/sources.list.d/charm.list
-    mode: '0644'
+    mode: "0644"
   become: yes
 
 - name: Update apt cache and install glow

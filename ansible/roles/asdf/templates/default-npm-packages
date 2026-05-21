@@ -1,4 +1,3 @@
-@google/gemini-cli
 pyright
 svelte-language-server
 typescript

@@ -10,5 +10,5 @@ brew update
 brew upgrade
 
 # Update code assistants
-npm install -g @google/gemini-cli@latest pyright typescript-language-server typescript npm
+npm install -g pyright typescript-language-server typescript npm
 claude update
