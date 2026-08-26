@@ -1,0 +1,95 @@
+---
+# lua-language-server gives the NeoVim config itself LSP support. Upstream ships
+# prebuilt tarballs for darwin and linux on both architectures, so this needs no
+# per-OS branching -- only a name map for the release asset.
+
+- name: Resolve the lua-language-server release platform
+  set_fact:
+    lua_ls_os: "{{ lua_ls_os_map[ansible_facts['system']] | default('') }}"
+    lua_ls_arch: "{{ lua_ls_arch_map[ansible_facts['architecture']] | default('') }}"
+
+- name: Skip lua-language-server on an unsupported platform
+  debug:
+    msg: >-
+      No lua-language-server build for {{ ansible_facts['system'] }}
+      /{{ ansible_facts['architecture'] }}; skipping.
+  when: lua_ls_os == '' or lua_ls_arch == ''
+
+- name: Install lua-language-server
+  when: lua_ls_os != '' and lua_ls_arch != ''
+  block:
+    - name: Check the installed lua-language-server version
+      command: "{{ lua_ls_install_dir }}/bin/lua-language-server --version"
+      register: lua_ls_check
+      failed_when: false
+      changed_when: false
+
+    - name: Decide whether lua-language-server needs installing
+      set_fact:
+        lua_ls_needs_install: "{{ lua_ls_check.rc != 0 or lua_ls_version not in (lua_ls_check.stdout | default('')) }}"
+
+    - name: Download and unpack lua-language-server
+      when: lua_ls_needs_install
+      block:
+        - name: Create a temporary directory for the download
+          tempfile:
+            state: directory
+            suffix: luals
+          register: lua_ls_temp
+
+        - name: Download the lua-language-server tarball
+          get_url:
+            url: >-
+              https://github.com/LuaLS/lua-language-server/releases/download/{{ lua_ls_version }}/lua-language-server-{{ lua_ls_version }}-{{ lua_ls_os }}-{{ lua_ls_arch }}.tar.gz
+            dest: "{{ lua_ls_temp.path }}/lua-language-server.tar.gz"
+            mode: "0644"
+
+        - name: Reset the lua-language-server directory
+          file:
+            path: "{{ lua_ls_install_dir }}"
+            state: "{{ item }}"
+            mode: "0755"
+          loop:
+            - absent
+            - directory
+
+        # Uses tar directly rather than the unarchive module: unarchive insists on
+        # GNU tar, and macOS ships BSD tar. Both handle -xzf identically, so this
+        # is the portable choice. Idempotency comes from the version gate above.
+        - name: Extract lua-language-server
+          command: >-
+            tar -xzf "{{ lua_ls_temp.path }}/lua-language-server.tar.gz"
+            -C "{{ lua_ls_install_dir }}"
+          # The tarball has no top-level directory, so it unpacks straight in.
+          changed_when: true
+
+        - name: Clean up the download
+          file:
+            path: "{{ lua_ls_temp.path }}"
+            state: absent
+
+    # Deliberately outside the download block: this must be reasserted on every
+    # run, or a machine already on the pinned version never gets its wrapper.
+    #
+    # A wrapper, not a symlink: the binary loads main.lua from its own argv[0]
+    # directory, so a symlink in ~/.local/bin makes it look for
+    # ~/.local/bin/main.lua and die. Exec'ing the real path fixes that.
+    - name: Put lua-language-server on PATH via a wrapper
+      copy:
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/lua-language-server"
+        mode: "0755"
+        content: |
+          #!/bin/sh
+          exec "{{ lua_ls_install_dir }}/bin/lua-language-server" "$@"
+
+    - name: Report the lua-language-server version
+      command: lua-language-server --version
+      register: lua_ls_final
+      changed_when: false
+      failed_when: false
+      environment:
+        PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+
+    - name: Show lua-language-server
+      debug:
+        msg: "lua-language-server: {{ lua_ls_final.stdout | default('NOT INSTALLED') }}"

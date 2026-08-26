@@ -1,28 +1,129 @@
 ---
-# NeoVim role main tasks
+# NeoVim: native-LSP Lua configuration.
+#
+# Replaces the previous vim-plug + coc.nvim setup. Server definitions live in
+# nvim's own lsp/ directory and are enabled with vim.lsp.enable(), so there is
+# no nvim-lspconfig, no Mason and no plugin manager beyond built-in vim.pack.
 
-- name: Create directory for vim-plug
+- name: Install NeoVim from upstream [Linux only]
+  include_tasks: install-linux.yaml
+  when: ansible_facts['os_family'] in ['Debian', 'Ubuntu']
+
+# Resolved by probing rather than branching on os_family: on Linux this is the
+# symlink the task above created, on macOS it is whatever Homebrew installed.
+- name: Locate the nvim binary
+  shell: |
+    for candidate in \
+      "{{ neovim_install_dir }}/bin/nvim" \
+      "{{ ansible_facts['env']['HOME'] }}/.local/bin/nvim" \
+      /opt/homebrew/bin/nvim \
+      /usr/local/bin/nvim; do
+      if [ -x "$candidate" ]; then echo "$candidate"; exit 0; fi
+    done
+    command -v nvim
+  register: neovim_which
+  changed_when: false
+  failed_when: neovim_which.stdout | trim == ''
+
+- name: Record the nvim binary path
+  set_fact:
+    neovim_bin: "{{ neovim_which.stdout | trim }}"
+
+- name: Read the installed NeoVim version
+  command: "{{ neovim_bin }} --version"
+  register: neovim_version_out
+  changed_when: false
+
+- name: Extract the version number
+  set_fact:
+    neovim_installed_version: "{{ neovim_version_out.stdout_lines[0] | regex_search('([0-9]+\\.[0-9]+\\.[0-9]+)', '\\1') | first }}"
+
+- name: Report the NeoVim in use
+  debug:
+    msg: "NeoVim {{ neovim_installed_version }} at {{ neovim_bin }}"
+
+- name: Require a NeoVim new enough for the native LSP config
+  fail:
+    msg: >-
+      NeoVim {{ neovim_installed_version }} is too old for this config, which needs
+      >= {{ neovim_minimum_version }} for vim.lsp.enable() and vim.pack.
+      On macOS run `brew upgrade neovim`.
+  when: neovim_installed_version is version(neovim_minimum_version, '<')
+
+# --------------------------------------------------------------- migration ---
+- name: Check for a pre-LSP init.vim
+  stat:
+    path: "{{ neovim_config_dir }}/init.vim"
+  register: neovim_legacy_init
+
+# NeoVim refuses to start when both init.vim and init.lua exist, so the old
+# file has to move aside rather than simply be left in place.
+- name: Preserve the pre-LSP init.vim as init.vim.bak
+  command: mv "{{ neovim_config_dir }}/init.vim" "{{ neovim_config_dir }}/init.vim.bak"
+  when: neovim_legacy_init.stat.exists
+
+- name: Remove vim-plug, which the Lua config does not use
   file:
-    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/autoload"
-    state: directory
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/autoload/plug.vim"
+    state: absent
+  when: neovim_remove_legacy_plugins | bool
 
-- name: Install vim-plug for neovim
-  get_url:
-    url: https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    dest: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/autoload/plug.vim"
-
-- name: nvim config dir
+- name: Remove vim-plug's installed plugins, including coc.nvim
   file:
-    path: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
+    # Note the "shared" spelling: the old init.vim pointed vim-plug here.
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/shared/nvim/site/plugged"
+    state: absent
+  when: neovim_remove_legacy_plugins | bool
+
+# ------------------------------------------------------------------ config ---
+- name: Create the nvim config directory
+  file:
+    path: "{{ neovim_config_dir }}"
     state: directory
-    recurse: true
+    mode: "0755"
 
-- name: nvim init file
-  template:
-    src: init.vim
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/nvim/init.vim"
+# Plain copy, not template: none of these files need substitution, and Lua's
+# nested tables produce `{{` sequences that Jinja would try to evaluate.
+- name: Install the nvim Lua configuration
+  copy:
+    src: nvim/
+    dest: "{{ neovim_config_dir }}/"
+    mode: "0644"
+  register: neovim_config
 
-- name: Install nvim dependencies
-  command: nvim --headless +PlugInstall +qall
+# --------------------------------------------------------------- bootstrap ---
+# vim.pack.add() installs synchronously on first start, so a plain headless
+# launch is enough to populate the plugin directory.
+- name: Install NeoVim plugins
+  command: "{{ neovim_bin }} --headless +qall"
+  changed_when: false
+  # Never break the play over plugin bootstrap: a missing network or toolchain
+  # leaves an editor that still starts and still runs LSP.
+  failed_when: false
+  timeout: 300
+
+# nvim-treesitter's main branch compiles parsers asynchronously and shells out
+# to the tree-sitter CLI (installed via .default-npm-packages), so give it time
+# and a chance to fail quietly when Node was skipped.
+- name: Compile treesitter parsers
+  command: >-
+    {{ neovim_bin }} --headless
+    -c "lua vim.defer_fn(function() vim.cmd('qall!') end, 120000)"
   args:
-    creates: "{{ ansible_facts['env']['HOME'] }}/.local/shared/nvim/site/plugged/vim/autoload/dracula.vim"
+    creates: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/parser/python.so"
+  failed_when: false
+  timeout: 300
+
+- name: Check whether treesitter parsers were built
+  stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/nvim/site/parser/python.so"
+  register: neovim_parser_check
+
+- name: Warn when treesitter parsers are missing
+  debug:
+    msg: >-
+      Treesitter parsers were not built. This needs the `tree-sitter` CLI, which
+      arrives with the default npm packages, so it is expected when Node was
+      skipped. LSP still works; syntax highlighting falls back to Vim regex.
+      Run `:lua require('nvim-treesitter').install()` in nvim once Node exists.
+  when: not neovim_parser_check.stat.exists

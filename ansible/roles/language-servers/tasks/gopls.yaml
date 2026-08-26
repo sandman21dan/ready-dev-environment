@@ -1,0 +1,50 @@
+---
+# gopls publishes no prebuilt binaries, so it can only be built with `go`.
+# The playbook adds the asdf golang plugin but does not install a Go version, so
+# a fresh machine may legitimately have no toolchain. That is not an error here:
+# gopls is skipped and the rest of the setup proceeds.
+
+- name: Look for a Go toolchain
+  command: go version
+  register: go_check
+  failed_when: false
+  changed_when: false
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+
+- name: Explain why gopls is being skipped
+  debug:
+    msg: >-
+      No Go toolchain found, so gopls is skipped. Install Go (for example
+      `asdf install golang latest && asdf set --home golang latest`) and re-run
+      this playbook to add Go support to NeoVim.
+  when: go_check.rc != 0
+
+- name: Build and install gopls
+  when: go_check.rc == 0
+  block:
+    - name: Report the Go toolchain found
+      debug:
+        msg: "Found {{ go_check.stdout | trim }}, installing gopls"
+
+    - name: Check whether gopls is already installed
+      command: gopls version
+      register: gopls_check
+      failed_when: false
+      changed_when: false
+      environment:
+        PATH: "{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+
+    - name: Install gopls
+      command: "go install {{ gopls_package }}"
+      when: gopls_check.rc != 0
+      environment:
+        PATH: "{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+
+    # `go install` drops the binary in the Go installation's bin directory, which
+    # asdf only exposes after a reshim. Without this gopls stays invisible.
+    - name: Reshim asdf so the gopls binary is on PATH
+      command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf reshim golang"
+      when: gopls_check.rc != 0
+      failed_when: false
+      changed_when: false

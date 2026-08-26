@@ -1,0 +1,31 @@
+---
+# Ruff has no npm package, so it comes from Astral's standalone installer. That
+# is deliberately independent of asdf Python: ruff is a self-contained binary,
+# so it works even when the playbook runs with skip_install_python.
+
+- name: Check whether ruff is installed
+  command: ruff --version
+  register: ruff_check
+  failed_when: false
+  changed_when: false
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+
+- name: Install ruff via the official installer
+  shell: curl -LsSf https://astral.sh/ruff/install.sh | sh
+  when: ruff_check.rc != 0
+  environment:
+    # The installer honours this for its install location.
+    XDG_BIN_HOME: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+
+- name: Report the ruff version
+  command: ruff --version
+  register: ruff_version
+  changed_when: false
+  failed_when: false
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
+
+- name: Show ruff
+  debug:
+    msg: "ruff: {{ ruff_version.stdout | default('NOT INSTALLED') }}"

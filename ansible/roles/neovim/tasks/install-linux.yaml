@@ -1,0 +1,77 @@
+---
+# Install NeoVim from the upstream tarball on Linux.
+#
+# Why not apt: Ubuntu 24.04 ships NeoVim 0.9.5, which predates vim.lsp.config
+# (0.11) and vim.pack (0.12) that this config is built on. There is no distro
+# package new enough, so the official static build is the only option.
+# Needs glibc >= 2.34, which Ubuntu 24.04 satisfies.
+
+- name: Resolve NeoVim release architecture
+  set_fact:
+    neovim_arch: "{{ neovim_arch_map[ansible_facts['architecture']] | default('') }}"
+
+- name: Fail on an unsupported architecture
+  fail:
+    msg: >-
+      No upstream NeoVim build for architecture
+      '{{ ansible_facts['architecture'] }}'. Supported: {{ neovim_arch_map.keys() | list | join(', ') }}.
+  when: neovim_arch == ''
+
+- name: Check the currently installed NeoVim
+  command: nvim --version
+  register: neovim_current
+  failed_when: false
+  changed_when: false
+
+- name: Decide whether NeoVim needs installing
+  set_fact:
+    # `nvim --version` prints "NVIM v0.12.4"; match the pinned tag exactly so a
+    # version bump triggers a reinstall.
+    neovim_needs_install: "{{ neovim_current.rc != 0 or neovim_version not in (neovim_current.stdout | default('')) }}"
+
+- name: Install NeoVim from the upstream tarball
+  when: neovim_needs_install
+  block:
+    - name: Create a temporary directory for the NeoVim download
+      tempfile:
+        state: directory
+        suffix: neovim
+      register: neovim_temp
+
+    - name: Download the NeoVim tarball
+      get_url:
+        url: >-
+          https://github.com/neovim/neovim/releases/download/{{ neovim_version }}/nvim-linux-{{ neovim_arch }}.tar.gz
+        dest: "{{ neovim_temp.path }}/nvim.tar.gz"
+        mode: "0644"
+
+    - name: Remove any previous NeoVim release directory
+      file:
+        path: "{{ neovim_install_dir }}"
+        state: absent
+
+    - name: Create the NeoVim release directory
+      file:
+        path: "{{ neovim_install_dir }}"
+        state: directory
+        mode: "0755"
+
+    # tar directly rather than the unarchive module, which requires GNU tar.
+    # --strip-components drops the single nvim-linux-<arch>/ top-level directory.
+    - name: Extract NeoVim
+      command: >-
+        tar -xzf "{{ neovim_temp.path }}/nvim.tar.gz"
+        -C "{{ neovim_install_dir }}" --strip-components=1
+      changed_when: true
+
+    - name: Link nvim onto PATH
+      file:
+        src: "{{ neovim_install_dir }}/bin/nvim"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/nvim"
+        state: link
+        force: true
+
+    - name: Clean up the NeoVim download
+      file:
+        path: "{{ neovim_temp.path }}"
+        state: absent

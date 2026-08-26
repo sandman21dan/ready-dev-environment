@@ -1,0 +1,15 @@
+---
+# Language servers used by the NeoVim config. pyright and the tree-sitter CLI
+# come from asdf's default npm packages, so they are not repeated here.
+
+- name: Install ruff (Python lint, format, import sort)
+  include_tasks: ruff.yaml
+  when: install_ruff | bool
+
+- name: Install gopls (Go language server)
+  include_tasks: gopls.yaml
+  when: install_gopls | bool
+
+- name: Install lua-language-server
+  include_tasks: lua-language-server.yaml
+  when: install_lua_language_server | bool

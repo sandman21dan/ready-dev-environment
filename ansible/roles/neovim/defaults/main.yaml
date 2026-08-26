@@ -1,0 +1,25 @@
+---
+# Minimum NeoVim needed by this config:
+#   vim.lsp.config / vim.lsp.enable  -> 0.11
+#   vim.pack (built-in plugin mgr)   -> 0.12
+neovim_minimum_version: "0.12.0"
+
+# Version installed on Linux, where the distro package is far too old
+# (Ubuntu 24.04 ships 0.9.5). macOS gets NeoVim from Homebrew instead.
+# Bump this to upgrade; the role reinstalls when the running version differs.
+neovim_version: "v0.12.4"
+
+# Upstream release assets are named by raw uname arch, so this cannot reuse
+# the playbook's `shorthand_arch` (which maps x86_64 -> amd64).
+neovim_arch_map:
+  x86_64: x86_64
+  amd64: x86_64
+  aarch64: arm64
+  arm64: arm64
+
+neovim_install_dir: "{{ ansible_facts['env']['HOME'] }}/.local/share/neovim-release"
+neovim_config_dir: "{{ ansible_facts['env']['HOME'] }}/.config/nvim"
+
+# The pre-LSP setup installed vim-plug and coc.nvim into these paths. They are
+# unused by the Lua config; set false to leave them on disk.
+neovim_remove_legacy_plugins: true

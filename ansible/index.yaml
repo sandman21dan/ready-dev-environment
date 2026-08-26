@@ -13,10 +13,9 @@
       - curl
       - git
       - jq
-      - neovim
       - nushell
+      - ripgrep
       - tmux
-      - tree
       - tree
       - vim
       - wget
@@ -40,6 +39,9 @@
       - asdf
       - fzf
       - glow
+      # Linux installs NeoVim from the upstream tarball in the neovim role,
+      # because no apt package is new enough for the native-LSP config.
+      - neovim
       - the_silver_searcher
       # database drivers
       - libpq
@@ -162,6 +164,10 @@
       copy:
         src: ./templates/vimrc
         dest: "{{ ansible_facts['env']['HOME'] }}/.vimrc"
+
+    - name: Install language servers
+      include_role:
+        name: language-servers
 
     # NeoVim configuration
     - name: Configure NeoVim
