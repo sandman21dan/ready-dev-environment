@@ -114,6 +114,9 @@
     - name: Install my-scripts CLI
       include_role:
         name: my-scripts
+        apply:
+          tags: [my-scripts]
+      tags: [my-scripts]
 
     - name: Install Claude Code and language server plugins
       include_role:

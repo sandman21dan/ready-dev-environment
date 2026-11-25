@@ -4,20 +4,26 @@
 - name: Detect latest stable Go version
   shell: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf list all golang | grep -E '^[0-9]+\\.[0-9]+(\\.[0-9]+)?$' | sort -V | tail -1"
   register: latest_go_version
+  tags: [go-toolchain]
 
 - name: Install Go via asdf
   command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf install golang {{ latest_go_version.stdout }}"
   args:
-    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/installs/golang"
+    # Per-version path: checking only the plugin directory skipped the install whenever any Go version existed,
+    # then the next task pointed the global version at a Go that was never installed.
+    creates: "{{ ansible_facts['env']['HOME'] }}/.asdf/installs/golang/{{ latest_go_version.stdout }}"
+  tags: [go-toolchain]
 
 - name: Set global Go version
   command: "{{ ansible_facts['env']['HOME'] }}/.local/bin/asdf set --home golang {{ latest_go_version.stdout }}"
+  tags: [go-toolchain]
 
 - name: Install gopls
   shell: |
     export PATH="{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH"
     export GOPATH="{{ ansible_facts['env']['HOME'] }}/.local/go"
     go install golang.org/x/tools/gopls@latest
+  tags: [go-toolchain]
 
 - name: Create temp build directory
   file:
