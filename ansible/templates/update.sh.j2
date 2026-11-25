@@ -1,0 +1,32 @@
+#!/usr/bin/env zsh
+# @description: Updates system packages (brew on macOS, apt on Linux/WSL), oh-my-zsh, npm globals and code assistants.
+#
+# Rendered by Ansible from ansible/templates/update.sh.j2. Edit the template, not ~/.local/scripts/update.sh.
+
+source $HOME/.zshrc
+
+{% if ansible_facts['os_family'] in ['Debian', 'Ubuntu'] %}
+# Ask for the sudo password once up front and keep the ticket alive, since apt can outlast the sudo timeout.
+sudo -v || exit 1
+while true; do sudo -n true; sleep 50; kill -0 "$$" || exit; done 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
+trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
+
+{% endif %}
+# Update Oh-my-zsh
+omz update
+
+{% if ansible_facts['os_family'] == 'Darwin' %}
+# Update brew dependencies
+brew update
+brew upgrade --yes
+{% else %}
+# Update apt dependencies
+sudo apt-get update
+sudo apt-get upgrade -y
+{% endif %}
+
+# Update code assistants
+npm install -g --allow-scripts=@github/keytar,node-pty,fsevents pyright typescript-language-server typescript npm @google/gemini-cli
+claude update
+agy update

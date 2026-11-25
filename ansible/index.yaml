@@ -144,6 +144,14 @@
       synchronize:
         src: ./scripts/
         dest: "{{ ansible_facts['env']['HOME'] }}/.local/scripts/"
+      tags: [scripts]
+
+    - name: update.sh
+      template:
+        src: ./templates/update.sh.j2
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/scripts/update.sh"
+        mode: "0755"
+      tags: [scripts]
 
     - name: zshrc
       template:

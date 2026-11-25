@@ -132,8 +132,8 @@ func getScriptDescription(filePath string) (string, error) {
 		// Handle Python docstrings and JavaScript block comments for @description (simplified)
 		// This is a basic check. A more robust solution would track multiline comments.
 		if (strings.HasPrefix(line, `"""`) && strings.Contains(line, "@description:")) ||
-		   (strings.HasPrefix(line, `'''`) && strings.Contains(line, "@description:")) ||
-		   (strings.HasPrefix(line, `/*`) && strings.Contains(line, "@description:")) {
+			(strings.HasPrefix(line, `'''`) && strings.Contains(line, "@description:")) ||
+			(strings.HasPrefix(line, `/*`) && strings.Contains(line, "@description:")) {
 			// Extract from within the comment/docstring
 			start := strings.Index(line, "@description:")
 			if start != -1 {

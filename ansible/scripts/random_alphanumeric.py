@@ -1,3 +1,4 @@
+# @description: Generates a random alphanumeric string with configurable length and character classes.
 import argparse
 import secrets
 import string

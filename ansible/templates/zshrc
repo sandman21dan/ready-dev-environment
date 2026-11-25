@@ -107,16 +107,6 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-SCRIPTS_DIR=$HOME/.local/scripts/
-
-join-lines() {
-  python $SCRIPTS_DIR/join_lines.py "$@"
-}
-
-timestamp-diff() {
-  python $SCRIPTS_DIR/timestamp_diff.py "$@"
-}
-
 git_fuzzy_checkout() {
   local branches branch
   branches=$(git branch -a) &&
@@ -128,8 +118,6 @@ alias git-checkout-fuzzy="git_fuzzy_checkout"
 
 alias git-delete-merged-branches='git branch --merged >/tmp/merged-branches && vi /tmp/merged-branches && xargs git branch -D </tmp/merged-branches'
 alias git-delete-all-branches='git branch >/tmp/merged-branches && vi /tmp/merged-branches && xargs git branch -D </tmp/merged-branches'
-
-alias md5sum='md5 -r'
 
 git-rebase-master() {
   git checkout -b $1 && git checkout $1 && git branch -D master && git checkout master && git pull && git checkout $1 && git rebase master && git checkout master && git rebase $1

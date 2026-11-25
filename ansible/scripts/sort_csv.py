@@ -1,7 +1,7 @@
+# @description: Sorts a CSV file by one or more columns, with optional type casting and direction per column.
 import argparse
 import csv
 import sys
-import os
 
 def parse_sort_specs(cols_str):
     """Parses the --cols argument into a list of sorting specifications."""
