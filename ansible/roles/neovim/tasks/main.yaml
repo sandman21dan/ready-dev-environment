@@ -81,6 +81,7 @@
     path: "{{ neovim_config_dir }}"
     state: directory
     mode: "0755"
+  tags: [dotfiles]
 
 # Plain copy, not template: none of these files need substitution, and Lua's
 # nested tables produce `{{` sequences that Jinja would try to evaluate.
@@ -90,6 +91,7 @@
     dest: "{{ neovim_config_dir }}/"
     mode: "0644"
   register: neovim_config
+  tags: [dotfiles]
 
 # --------------------------------------------------------------- bootstrap ---
 # vim.pack.add() installs synchronously on first start, so a plain headless
