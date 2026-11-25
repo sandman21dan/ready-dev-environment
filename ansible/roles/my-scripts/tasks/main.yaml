@@ -55,3 +55,11 @@
   file:
     path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/my-scripts"
     mode: "0755"
+
+# Compiled helper tools (Go/Rust) built from files/tools/ into the scripts directory, where the CLI exposes them.
+- name: Build compiled helper tools
+  include_tasks:
+    file: tools.yaml
+    apply:
+      tags: [tools]
+  tags: [tools]

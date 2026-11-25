@@ -132,7 +132,7 @@
         name: my-scripts
         apply:
           tags: [my-scripts]
-      tags: [my-scripts]
+      tags: [my-scripts, tools]
 
     - name: Install Claude Code and language server plugins
       include_role:

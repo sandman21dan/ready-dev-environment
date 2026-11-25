@@ -1,0 +1,6 @@
+---
+# Where the my-scripts CLI looks for scripts and compiled tools.
+my_scripts_dir: "{{ ansible_facts['env']['HOME'] }}/.local/scripts"
+
+# Scratch space for building the compiled tools in files/tools/. Removed after every run.
+my_scripts_tools_build_dir: "{{ ansible_facts['env']['HOME'] }}/.local/tmp/my-scripts-tools-build"

@@ -1,0 +1,76 @@
+---
+# Build the compiled helper tools in files/tools/<name>/ and install each to {{ my_scripts_dir }}/<name>.
+#
+# Binaries are platform specific, so they are built on each machine instead of being committed. Supports Go
+# (go.mod) and Rust (Cargo.toml). A missing toolchain skips that tool; a failing build fails the play.
+# See files/tools/README.md for the conventions.
+
+- name: Build compiled helper tools
+  block:
+    # Start from a clean directory so a tool deleted from the repo is not built from a stale copy.
+    - name: Remove any previous tools build directory
+      file:
+        path: "{{ my_scripts_tools_build_dir }}"
+        state: absent
+
+    - name: Copy tool sources
+      copy:
+        src: tools/
+        dest: "{{ my_scripts_tools_build_dir }}/"
+        mode: preserve
+
+    - name: Create the scripts directory
+      file:
+        path: "{{ my_scripts_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Build and install the tools
+      shell: |
+        set -eu
+        export PATH="{{ ansible_facts['env']['HOME'] }}/.asdf/shims:{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['HOME'] }}/.local/bin:$PATH"
+        export GOPATH="{{ ansible_facts['env']['HOME'] }}/.local/go"
+        built=0
+        for dir in "{{ my_scripts_tools_build_dir }}"/*/; do
+          [ -d "$dir" ] || continue
+          name=$(basename "$dir")
+          cd "$dir"
+          if [ -f go.mod ]; then
+            # Run the toolchain rather than `command -v`: an asdf shim exists even when no version is installed.
+            if ! go version >/dev/null 2>&1; then echo "SKIPPED $name: no working Go toolchain"; continue; fi
+            go build -o "{{ my_scripts_dir }}/$name" .
+            echo "BUILT $name (go)"
+          elif [ -f Cargo.toml ]; then
+            if ! cargo --version >/dev/null 2>&1; then echo "SKIPPED $name: no working Rust toolchain"; continue; fi
+            locked=""; [ -f Cargo.lock ] && locked="--locked"
+            cargo build --release --quiet $locked
+            if [ ! -x "target/release/$name" ]; then
+              echo "FAILED $name: cargo produced no target/release/$name (the package name must match the directory name)" >&2
+              exit 1
+            fi
+            install -m 0755 "target/release/$name" "{{ my_scripts_dir }}/$name"
+            echo "BUILT $name (rust)"
+          else
+            echo "SKIPPED $name: no go.mod or Cargo.toml"
+            continue
+          fi
+          # The one-line description the my-scripts CLI shows in --help; a binary cannot hold a comment header.
+          if [ -f DESCRIPTION ]; then
+            install -m 0644 DESCRIPTION "{{ my_scripts_dir }}/$name.desc"
+          fi
+        done
+      args:
+        executable: /bin/bash
+      register: my_scripts_tools_build
+      changed_when: "'BUILT ' in my_scripts_tools_build.stdout"
+
+    - name: Report tool builds
+      debug:
+        msg: "{{ my_scripts_tools_build.stdout_lines }}"
+      when: my_scripts_tools_build.stdout_lines | default([]) | length > 0
+
+  always:
+    - name: Remove the tools build directory
+      file:
+        path: "{{ my_scripts_tools_build_dir }}"
+        state: absent

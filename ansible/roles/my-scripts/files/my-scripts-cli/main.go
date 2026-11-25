@@ -2,13 +2,24 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
+)
+
+const (
+	noDescription = "No description available."
+	// descriptionSidecarExt names an optional "<file>.desc" next to a script or binary. It is the only way to
+	// describe a compiled binary, and it takes priority over an @description comment.
+	descriptionSidecarExt = ".desc"
 )
 
 var rootCmd = &cobra.Command{
@@ -24,8 +35,23 @@ func main() {
 	}
 
 	if err := rootCmd.Execute(); err != nil {
+		// A script that ran and failed: pass its exit status through so && chains and pipelines behave as if the
+		// script had been run directly. Script commands silence cobra's own output, so nothing extra is printed.
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitCode(exitErr))
+		}
 		os.Exit(1)
 	}
+}
+
+// exitCode returns the status a shell would report for the finished process: its exit status, or 128+signal when it
+// was killed by a signal (ExitCode() alone returns -1 in that case).
+func exitCode(err *exec.ExitError) int {
+	if status, ok := err.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+		return 128 + int(status.Signal())
+	}
+	return err.ExitCode()
 }
 
 func addScriptSubCommands(root *cobra.Command) error {
@@ -76,6 +102,10 @@ func addScriptSubCommands(root *cobra.Command) error {
 				Short:              description,
 				RunE:               createRunE(scriptPath, fileName),
 				DisableFlagParsing: true,
+				// The script owns its own usage and error output. Without these, cobra appends "Error: exit status N"
+				// and its own usage block after every non-zero exit.
+				SilenceUsage:  true,
+				SilenceErrors: true,
 			}
 			root.AddCommand(scriptCmd)
 		}
@@ -98,18 +128,63 @@ func createRunE(scriptPath, fileName string) func(cmd *cobra.Command, args []str
 		command.Stdout = os.Stdout
 		command.Stderr = os.Stderr
 
-		return command.Run()
+		err := command.Run()
+
+		// An exit status is the script's own result and is reported by main. Anything else means it never ran
+		// (not found, exec format error, permission denied), and nothing else would explain that to the user.
+		var exitErr *exec.ExitError
+		if err != nil && !errors.As(err, &exitErr) {
+			fmt.Fprintf(os.Stderr, "my-scripts: could not run %s: %v\n", fileName, err)
+		}
+		return err
 	}
 }
 
+// getScriptDescription returns the one-line description shown in --help: a "<file>.desc" sidecar if present,
+// otherwise an @description comment in a text file. Compiled binaries are never scanned.
 func getScriptDescription(filePath string) (string, error) {
+	if desc, ok := readSidecarDescription(filePath); ok {
+		return desc, nil
+	}
+
 	file, err := os.Open(filePath)
 	if err != nil {
-		return "No description available.", err
+		return noDescription, err
 	}
 	defer file.Close()
 
+	if looksBinary(file) {
+		return noDescription, nil
+	}
+	return scanForDescription(file)
+}
+
+// readSidecarDescription returns the first non-empty line of "<filePath>.desc".
+func readSidecarDescription(filePath string) (string, bool) {
+	data, err := os.ReadFile(filePath + descriptionSidecarExt)
+	if err != nil {
+		return "", false
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if line = strings.TrimSpace(line); line != "" {
+			return line, true
+		}
+	}
+	return "", false
+}
+
+// looksBinary applies git's heuristic (a NUL byte in the first 8000 bytes) and rewinds the file afterwards.
+func looksBinary(file *os.File) bool {
+	buf := make([]byte, 8000)
+	n, _ := file.Read(buf)
+	_, _ = file.Seek(0, io.SeekStart)
+	return bytes.IndexByte(buf[:n], 0) >= 0
+}
+
+func scanForDescription(file *os.File) (string, error) {
 	scanner := bufio.NewScanner(file)
+	// The default 64KB token limit makes a long line (minified JS, for example) abort the scan.
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 
@@ -147,9 +222,6 @@ func getScriptDescription(filePath string) (string, error) {
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
-		return "Error reading file for description.", err
-	}
-
-	return "No description available.", nil
+	// Whatever went wrong while scanning, --help should still read cleanly, so fall back to the default text.
+	return noDescription, scanner.Err()
 }

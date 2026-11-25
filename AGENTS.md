@@ -133,6 +133,13 @@ the binary stays invisible, which the role does.
   needs no CLI change. The binary is only rebuilt when the playbook runs, so changes to `main.go` need a re-run.
 - The text shown in `my-scripts --help` comes from a `# @description: ...` comment (`//` for JS) on its own line near
   the top of each script. Without it the command shows "No description available.", so every script should have one.
+- Compiled tools (Go or Rust) are **never committed**, because binaries are platform specific. Their source goes in
+  `roles/my-scripts/files/tools/<name>/`, and `tasks/tools.yaml` builds each one on the target machine into
+  `~/.local/scripts/<name>` (run alone with `--tags tools`). A one-line `DESCRIPTION` file in the tool directory is
+  installed as `<name>.desc`; the CLI reads a `<file>.desc` sidecar for any script or binary, and never scans binary
+  content. A missing toolchain skips a tool, a failing compile fails the play. See `files/tools/README.md`.
+- The CLI passes a script's exit status through (128+N when killed by a signal) and prints nothing of its own when a
+  script fails, so it is safe in `&&` chains and pipelines.
 - Do not add shell aliases or functions in `templates/zshrc` that wrap a script; the CLI already exposes it.
 - **`update.sh` is a template**, not a plain script: `templates/update.sh.j2` is rendered to
   `~/.local/scripts/update.sh` because the package manager differs per OS (brew on macOS, apt with an up-front
