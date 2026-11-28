@@ -14,7 +14,7 @@ trap 'kill $SUDO_KEEPALIVE_PID 2>/dev/null' EXIT
 
 {% endif %}
 # Update Oh-my-zsh
-omz update
+echo y | omz update
 
 {% if ansible_facts['os_family'] == 'Darwin' %}
 # Update brew dependencies
